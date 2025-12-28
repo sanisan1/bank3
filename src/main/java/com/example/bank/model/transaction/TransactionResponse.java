@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class TransactionResponse {
     private Long Id;
-    private String fromAccount;
-    private String toAccount;
+    private String fromCard;
+    private String toCard;
     private BigDecimal amount;
     private LocalDateTime timestamp;
     private OperationType type;

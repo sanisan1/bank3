@@ -33,21 +33,21 @@ Content-Type: application/json
 
 
 ### Создание первого дебетового счета
-POST http://localhost:8080/api/debit-accounts
+POST http://localhost:8080/api/debit-cards
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJpYXQiOjE3NjQ5NTMwOTEsImV4cCI6MTc2NDk1NjY5MX0.ovzBzKTtsU7eE9iu3PLoI3oq4CoKEiGxC18TjpoInSo
 Content-Type: application/json
 
 
 
 ### Создание второго дебетового счета
-POST http://localhost:8080/api/debit-accounts
+POST http://localhost:8080/api/debit-cards
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJpYXQiOjE3NjM5OTcwNDcsImV4cCI6MTc2NDAwMDY0N30.-Z-N4tgMgFb07zqW8Y-NKSUXtMYL4eWkOgQrx1bitg0
 Content-Type: application/json
 
 
 
 ### Создание кредитного счета
-POST http://localhost:8080/api/credit-accounts/create
+POST http://localhost:8080/api/credit-cards/create
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJpYXQiOjE3NjQ5NDM5MTAsImV4cCI6MTc2NDk0NzUxMH0.Pq1cSZU6SuYHq0Gm-tu_bzlhnpRkJ-u-W1F0mwLBJDg
 Content-Type: application/json
 
@@ -60,7 +60,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJpYXQiOjE3N
 Content-Type: application/json
 
 {
-  "accountNumber": "3029511518",
+  "cardNumber": "3029511518",
   "amount": 5000,
   "comment": "Пополнение"
 }
@@ -71,8 +71,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImlhdCI6MTc2N
 Content-Type: application/json
 
 {
-  "fromAccount": "0092386887",
-  "toAccount": "6632163960",
+  "fromCard": "0092386887",
+  "toCard": "6632163960",
   "amount": 250,
   "comment": "Перевод"
 }
@@ -83,7 +83,7 @@ Authorization: Bearer yJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJpYXQiOjE3Nj
 Content-Type: application/json
 
 {
-  "accountNumber": "0964374508",
+  "cardNumber": "0964374508",
   "amount": 500,
   "comment": "Снятие"
 }
@@ -96,29 +96,29 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJpYXQiOjE3N
 
 
 ###Все счаета
-GET http://localhost:8080/api/accounts/getAccounts
+GET http://localhost:8080/api/cards/getCards
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJpYXQiOjE3NjQ5NDM5MTAsImV4cCI6MTc2NDk0NzUxMH0.Pq1cSZU6SuYHq0Gm-tu_bzlhnpRkJ-u-W1F0mwLBJDg
 
 ### Увеличение кредитного лимита (только админ)
-PUT http://localhost:8080/api/credit-accounts/{{credit_account_number}}/increase-limit?newLimit=6000.00
+PUT http://localhost:8080/api/credit-cards/{{credit_card_number}}/increase-limit?newLimit=6000.00
 Authorization: Bearer
 
 ### Уменьшение кредитного лимита (только админ)
-PUT http://localhost:8080/api/credit-accounts/{{credit_account_number}}/decrease-limit?newLimit=5500.00
+PUT http://localhost:8080/api/credit-cards/{{credit_card_number}}/decrease-limit?newLimit=5500.00
 Authorization: Bearer
 
 ### Установка процентной ставки (только админ)
-PUT http://localhost:8080/api/credit-accounts/{{credit_account_number}}/set-interest?newRate=6.5
+PUT http://localhost:8080/api/credit-cards/{{credit_card_number}}/set-interest?newRate=6.5
 Authorization: Bearer
 
 ### Удаление кредитного счета (только админ)
-DELETE http://localhost:8080/api/credit-accounts/{{credit_account_number}}
+DELETE http://localhost:8080/api/credit-cards/{{credit_card_number}}
 Authorization: Bearer
 
 
 
 ### asdasd
-POST http://localhost:8080/api/credit-accounts/accrue-interest
+POST http://localhost:8080/api/credit-cards/accrue-interest
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2MjcxNDE3MiwiZXhwIjoxNzYyNzE3NzcyfQ.Ukqwwvpya5IXEtoQ5-iiVE0OdZHpyS2hxyLWfsOYT5E
 
 ### Все транзакции

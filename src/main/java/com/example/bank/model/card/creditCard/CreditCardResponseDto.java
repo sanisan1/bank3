@@ -1,4 +1,4 @@
-package com.example.bank.model.account.creditAccount;
+package com.example.bank.model.card.creditCard;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,9 +9,9 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreditAccountResponseDto {
+public class CreditCardResponseDto {
 
-    private String accountNumber;
+    private String cardNumber;
     private BigDecimal balance;
     private BigDecimal creditLimit;
     private BigDecimal interestRate;

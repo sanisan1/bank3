@@ -56,8 +56,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleUserBlockedException(UserBlockedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
-    @ExceptionHandler(AccountBlockedException.class)
-    public ResponseEntity<String> handleAccountBlockedException(AccountBlockedException ex) {
+    @ExceptionHandler(CardBlockedException.class)
+    public ResponseEntity<String> handleCardBlockedException(CardBlockedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
 

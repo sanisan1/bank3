@@ -1,7 +1,7 @@
-package com.example.bank.model.account;
+package com.example.bank.model.card;
 
 
-import com.example.bank.Enums.AccountType;
+import com.example.bank.Enums.CardType;
 import com.example.bank.model.user.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -14,9 +14,9 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "accounts")
+@Table(name = "cards")
 @Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Account {
+public abstract class Card {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +24,7 @@ public abstract class Account {
     private long id;
 
     @Column(length = 10, unique = true, nullable = false)
-    private String accountNumber;
+    private String cardNumber;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -37,7 +37,7 @@ public abstract class Account {
 
 
     @Enumerated(EnumType.STRING)
-    private AccountType accountType;
+    private CardType cardType;
 
 
 }

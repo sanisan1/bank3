@@ -1,6 +1,6 @@
 package com.example.bank.model.user;
 
-import com.example.bank.model.account.debitAccount.DebitAccount;
+import com.example.bank.model.card.debitCard.DebitCard;
 import com.example.bank.Enums.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -50,12 +50,12 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<DebitAccount> accounts = new ArrayList<>();
+    private List<DebitCard> cards = new ArrayList<>();
 
 
     @OneToOne
-    @JoinColumn(name = "main_account_id")
-    private DebitAccount mainAccount;
+    @JoinColumn(name = "main_card_id")
+    private DebitCard mainCard;
 
 
 

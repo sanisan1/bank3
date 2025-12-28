@@ -1,14 +1,14 @@
 package com.example.bank.service;
 
 import com.example.bank.exception.ResourceNotFoundException;
-import com.example.bank.mapper.AccountMapper;
+import com.example.bank.mapper.CardMapper;
 import com.example.bank.mapper.UserMapper;
-import com.example.bank.model.account.AccountDto;
-import com.example.bank.model.account.debitAccount.DebitAccount;
-import com.example.bank.Enums.AccountType;
+import com.example.bank.model.card.CardDto;
+import com.example.bank.model.card.debitCard.DebitCard;
+import com.example.bank.Enums.CardType;
 import com.example.bank.model.user.CreateUserDto;
 import com.example.bank.model.user.User;
-import com.example.bank.repository.AccountRepository;
+import com.example.bank.repository.CardRepository;
 import com.example.bank.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +29,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AccountRepository accountRepository;
+    private final CardRepository cardRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AccountRepository accountRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, CardRepository cardRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.accountRepository = accountRepository;
+        this.cardRepository = cardRepository;
     }
 
     // Создание нового пользователя
@@ -116,27 +116,27 @@ public class UserService {
     }
 
     // Установка основного счета пользователя
-    @PreAuthorize("@accountSecurity.isOwner(#accountNumber)")
-    public AccountDto setMainAccount(String accountNumber) {
-        log.info("User attempting to set main account: accountNumber={}", accountNumber);
+    @PreAuthorize("@cardSecurity.isOwner(#cardNumber)")
+    public CardDto setMainCard(String cardNumber) {
+        log.info("User attempting to set main card: cardNumber={}", cardNumber);
 
         User user = getCurrentUser();
 
-        DebitAccount account = (DebitAccount) accountRepository
-                .findByAccountNumberAndAccountType(accountNumber, AccountType.DEBIT)
+        DebitCard card = (DebitCard) cardRepository
+                .findByCardNumberAndCardType(cardNumber, CardType.DEBIT)
                 .orElseThrow(() -> {
-                    log.warn("Account not found when setting main account: accountNumber={}, userId={}",
-                            accountNumber, user.getUserId());
-                    return new ResourceNotFoundException("Account", "id", accountNumber);
+                    log.warn("Card not found when setting main card: cardNumber={}, userId={}",
+                            cardNumber, user.getUserId());
+                    return new ResourceNotFoundException("Card", "id", cardNumber);
                 });
 
-        user.setMainAccount(account);
+        user.setMainCard(card);
         userRepository.save(user);
 
-        log.info("Main account set successfully: userId={}, accountNumber={}",
-                user.getUserId(), accountNumber);
+        log.info("Main card set successfully: userId={}, cardNumber={}",
+                user.getUserId(), cardNumber);
 
-        return AccountMapper.toDto(user.getMainAccount());
+        return CardMapper.toDto(user.getMainCard());
     }
 
     // Получение текущего пользователя из контекста безопасности

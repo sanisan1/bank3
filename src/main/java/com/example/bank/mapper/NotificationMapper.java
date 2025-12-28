@@ -7,15 +7,15 @@ import com.example.bank.Enums.NotflicationType;
 import com.example.bank.model.Notification;
 import com.example.bank.model.NotificationResponse;
 import com.example.bank.model.transaction.Transaction;
-import com.example.bank.repository.AccountRepository;
+import com.example.bank.repository.CardRepository;
 import org.springframework.stereotype.Component;
 
 @Component
 public class NotificationMapper {
-    private static AccountRepository accountRepository;
+    private static CardRepository cardRepository;
 
-    public NotificationMapper(AccountRepository accountRepository) {
-        NotificationMapper.accountRepository = accountRepository;
+    public NotificationMapper(CardRepository cardRepository) {
+        NotificationMapper.cardRepository = cardRepository;
     }
 
 
@@ -39,12 +39,12 @@ public class NotificationMapper {
 
         //Если мы депозитим значит счёт с которым проводится операция пользавталем to сли перевод снять from
         if (transaction.getType() == OperationType.deposit) {
-            eventDTO.setAccountNumber(transaction.getToAccount());
+            eventDTO.setCardNumber(transaction.getToCard());
         } else {
-            eventDTO.setAccountNumber(transaction.getFromAccount());
+            eventDTO.setCardNumber(transaction.getFromCard());
         }
 
-        eventDTO.setAccountTransferTo(transaction.getToAccount());
+        eventDTO.setCardTransferTo(transaction.getToCard());
         eventDTO.setAmount(transaction.getAmount());
         eventDTO.setUserId(transaction.getUser().getUserId());
         eventDTO.setComment(transaction.getComment());
@@ -57,10 +57,10 @@ public class NotificationMapper {
         notification.setUserId(eventDTO.getUserId());
         notification.setType(type);
         if (type == NotflicationType.TRANSFER) {
-            String AccountTransferTo = eventDTO.getAccountTransferTo();
-            notification.setAccountTransferTo(AccountTransferTo);
+            String CardTransferTo = eventDTO.getCardTransferTo();
+            notification.setCardTransferTo(CardTransferTo);
         }
-        notification.setAccountNumber(eventDTO.getAccountNumber());
+        notification.setCardNumber(eventDTO.getCardNumber());
         notification.setAmount(eventDTO.getAmount());
         notification.setComment(eventDTO.getComment());
         notification.setTitle(toTitle(type));
@@ -72,14 +72,14 @@ public class NotificationMapper {
 
     public static Notification makeNotificationForReciever(Notification notification) {
         Notification clone = new Notification();
-        String accTrTo = notification.getAccountTransferTo();
-        clone.setUserId(accountRepository.findByAccountNumber(accTrTo)
-                .orElseThrow(() -> new ResourceNotFoundException("Account", "UserId",accTrTo))
+        String accTrTo = notification.getCardTransferTo();
+        clone.setUserId(cardRepository.findByCardNumber(accTrTo)
+                .orElseThrow(() -> new ResourceNotFoundException("Card", "UserId",accTrTo))
                 .getUser().getUserId());
         clone.setType(notification.getType());
         clone.setTitle(notification.getTitle());
-        clone.setAccountNumber(notification.getAccountNumber());
-        clone.setAccountTransferTo(accTrTo);
+        clone.setCardNumber(notification.getCardNumber());
+        clone.setCardTransferTo(accTrTo);
         clone.setAmount(notification.getAmount());
         clone.setComment(notification.getComment());
         clone.setMessage(notification.getMessage());
@@ -93,12 +93,12 @@ public class NotificationMapper {
         NotificationResponse response = new NotificationResponse();
         response.setType(notification.getType());
         response.setTitle(notification.getTitle());
-        response.setAccountTransferTo(notification.getAccountTransferTo());
+        response.setCardTransferTo(notification.getCardTransferTo());
         // Маскируем номер только для TRANSFER
         if (notification.getType() == NotflicationType.TRANSFER) {
-            response.setAccountNumber(maskAccount(notification.getAccountNumber()));
+            response.setCardNumber(maskCard(notification.getCardNumber()));
         } else {
-            response.setAccountNumber(notification.getAccountNumber());
+            response.setCardNumber(notification.getCardNumber());
         }
         response.setComment(notification.getComment());
         response.setMessage(notification.getMessage());
@@ -127,7 +127,7 @@ public class NotificationMapper {
         }
     }
     public static String toMessage(EventDTO eventDTO, NotflicationType type) {
-        String accountPart = "счёт: " + maskAccount(eventDTO.getAccountNumber());
+        String cardPart = "счёт: " + maskCard(eventDTO.getCardNumber());
         String amountPart = (eventDTO.getAmount() != null ? " на сумму " + eventDTO.getAmount() + " ₽" : "");
         String commentPart = (eventDTO.getComment() != null && !eventDTO.getComment().isEmpty())
                 ? " (Комментарий: " + eventDTO.getComment() + ")"
@@ -136,12 +136,12 @@ public class NotificationMapper {
 
         switch (type) {
             case DEPOSIT:
-                return "Пополнение " + accountPart + amountPart + commentPart;
+                return "Пополнение " + cardPart + amountPart + commentPart;
             case WITHDRAW:
-                return "Снятие средств с " + accountPart + amountPart + commentPart;
+                return "Снятие средств с " + cardPart + amountPart + commentPart;
             case TRANSFER:
-                String accountTransferToPart = "на счёт " + maskAccount(eventDTO.getAccountTransferTo());
-                return "Перевод с счёта " + accountPart + amountPart + accountTransferToPart + commentPart;
+                String cardTransferToPart = "на счёт " + maskCard(eventDTO.getCardTransferTo());
+                return "Перевод с счёта " + cardPart + amountPart + cardTransferToPart + commentPart;
             case FRAUD:
                 return "Обнаружена подозрительная активность по вашему счёту. Срочно свяжитесь с банком!" + commentPart;
             case INFO:
@@ -151,8 +151,8 @@ public class NotificationMapper {
     }
 
     // Можно добавить маску для отображения номера счёта (****7071)
-    private static String maskAccount(String accountNumber) {
-        if (accountNumber == null || accountNumber.length() < 4) return accountNumber == null ? "" : accountNumber;
-        return "****" + accountNumber.substring(accountNumber.length() - 4);
+    private static String maskCard(String cardNumber) {
+        if (cardNumber == null || cardNumber.length() < 4) return cardNumber == null ? "" : cardNumber;
+        return "****" + cardNumber.substring(cardNumber.length() - 4);
     }
 }

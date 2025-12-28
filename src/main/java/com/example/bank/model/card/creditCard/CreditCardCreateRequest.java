@@ -1,4 +1,4 @@
-package com.example.bank.model.account.creditAccount;
+package com.example.bank.model.card.creditCard;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreditAccountCreateRequest {
+public class CreditCardCreateRequest {
     @NotNull
     private Long userId;
 

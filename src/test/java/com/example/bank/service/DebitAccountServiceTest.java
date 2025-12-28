@@ -1,13 +1,13 @@
 package com.example.bank.service;
 
-import com.example.bank.exception.AccountBlockedException;
+import com.example.bank.exception.CardBlockedException;
 import com.example.bank.exception.InvalidOperationException;
-import com.example.bank.model.account.debitAccount.DebitAccount;
-import com.example.bank.model.account.debitAccount.DebitAccountResponse;
+import com.example.bank.model.card.debitCard.DebitCard;
+import com.example.bank.model.card.debitCard.DebitCardResponse;
 import com.example.bank.model.user.User;
-import com.example.bank.repository.AccountRepository;
+import com.example.bank.repository.CardRepository;
 import com.example.bank.repository.UserRepository;
-import com.example.bank.security.AccountSecurity;
+import com.example.bank.security.CardSecurity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,16 +25,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class DebitAccountServiceTest {
+class DebitCardServiceTest {
 
     @Mock
-    private AccountRepository accountRepository;
+    private CardRepository cardRepository;
 
     @Mock
     private UserRepository userRepository;
 
     @Mock
-    private AccountSecurity accountSecurity;
+    private CardSecurity cardSecurity;
 
     @Mock
     private SecurityContext securityContext;
@@ -43,86 +43,86 @@ class DebitAccountServiceTest {
     private Authentication authentication;
 
     @InjectMocks
-    private DebitAccountService debitAccountService;
+    private DebitCardService debitCardService;
 
-    private DebitAccount account;
+    private DebitCard card;
 
     @BeforeEach
     void setUp() {
         SecurityContextHolder.setContext(securityContext);
-        account = new DebitAccount();
-        account.setAccountNumber("1234567890");
-        account.setBalance(new BigDecimal(1000));
+        card = new DebitCard();
+        card.setCardNumber("1234567890");
+        card.setBalance(new BigDecimal(1000));
     }
 
     @Test
-    void createAccount_shouldCreateDebitAccount() {
+    void createCard_shouldCreateDebitCard() {
         // Arrange
         User user = new User();
         user.setUserId(1L);
         user.setBlocked(false);
 
-        DebitAccount account = new DebitAccount();
-        account.setId(1L);
-        account.setAccountNumber("1234567890");
-        account.setUser(user);
+        DebitCard card = new DebitCard();
+        card.setId(1L);
+        card.setCardNumber("1234567890");
+        card.setUser(user);
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn("testUser");
         when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getPrincipal()).thenReturn(user);
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
-        when(accountRepository.save(any(DebitAccount.class))).thenReturn(account);
+        when(cardRepository.save(any(DebitCard.class))).thenReturn(card);
 
         // Act
-        DebitAccountResponse response = debitAccountService.createAccount();
+        DebitCardResponse response = debitCardService.createCard();
 
         // Assert
         assertNotNull(response);
-        assertEquals("1234567890", response.getAccountNumber());
-        verify(accountRepository, times(1)).save(any(DebitAccount.class));
+        assertEquals("1234567890", response.getCardNumber());
+        verify(cardRepository, times(1)).save(any(DebitCard.class));
     }
 
 
 
     @Test
-    void createAccount_shouldThrowExceptionWhenUserNotAuthenticated() {
+    void createCard_shouldThrowExceptionWhenUserNotAuthenticated() {
 
         when(securityContext.getAuthentication()).thenReturn(null);
 
 
-        assertThrows(AccessDeniedException.class, () -> debitAccountService.createAccount());
-        verify(accountRepository, never()).save(any(DebitAccount.class));
+        assertThrows(AccessDeniedException.class, () -> debitCardService.createCard());
+        verify(cardRepository, never()).save(any(DebitCard.class));
     }
 
 
     @Test
     void testDeposit() {
-        debitAccountService.processDeposit(account, new BigDecimal(100));
-        assertEquals(new BigDecimal(1100), account.getBalance());
+        debitCardService.processDeposit(card, new BigDecimal(100));
+        assertEquals(new BigDecimal(1100), card.getBalance());
 
     }
 
     @Test
     void testWithdraw() {
-        debitAccountService.processWithdraw(account, new BigDecimal(100));
-        assertEquals(new BigDecimal(900), account.getBalance());
+        debitCardService.processWithdraw(card, new BigDecimal(100));
+        assertEquals(new BigDecimal(900), card.getBalance());
     }
 
     @Test
     void testWithdraw_shouldThrowExceptionWhenAmountIsNegative() {
-        assertThrows(IllegalArgumentException.class, () -> debitAccountService.processWithdraw(account, new BigDecimal(-100)));
+        assertThrows(IllegalArgumentException.class, () -> debitCardService.processWithdraw(card, new BigDecimal(-100)));
     }
 
     @Test
     void testWithdraw_shouldThrowExceptionWhenAmountIsGreaterThanBalance() {
-        assertThrows(InvalidOperationException.class, () -> debitAccountService.processWithdraw(account, new BigDecimal(1100)));
+        assertThrows(InvalidOperationException.class, () -> debitCardService.processWithdraw(card, new BigDecimal(1100)));
     }
 
     @Test
-    void testWithdraw_shouldThrowExceptionWhenAccountIsBlocked() {
-        account.setBlocked(true);
-        assertThrows(AccountBlockedException.class, () -> debitAccountService.processWithdraw(account, new BigDecimal(100)));
+    void testWithdraw_shouldThrowExceptionWhenCardIsBlocked() {
+        card.setBlocked(true);
+        assertThrows(CardBlockedException.class, () -> debitCardService.processWithdraw(card, new BigDecimal(100)));
     }
 
 

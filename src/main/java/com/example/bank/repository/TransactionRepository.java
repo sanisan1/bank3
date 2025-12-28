@@ -10,6 +10,6 @@ import java.util.List;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    List<Transaction> findByFromAccountOrToAccount(String fromAccount, String toAccount);
-    List<Transaction> findByFromAccountInOrToAccountIn(List<String> fromAccounts, List<String> toAccounts);
+    List<Transaction> findByFromCardOrToCard(String fromCard, String toCard);
+    List<Transaction> findByFromCardInOrToCardIn(List<String> fromCards, List<String> toCards);
 }

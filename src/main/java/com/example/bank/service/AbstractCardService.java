@@ -1,14 +1,14 @@
 package com.example.bank.service;
 
-import com.example.bank.exception.AccountBlockedException;
+import com.example.bank.exception.CardBlockedException;
 import com.example.bank.exception.InvalidOperationException;
 import com.example.bank.exception.ResourceNotFoundException;
-import com.example.bank.model.account.Account;
+import com.example.bank.model.card.Card;
 import com.example.bank.Enums.Role;
 import com.example.bank.model.user.User;
-import com.example.bank.repository.AccountRepository;
+import com.example.bank.repository.CardRepository;
 import com.example.bank.repository.UserRepository;
-import com.example.bank.security.AccountSecurity;
+import com.example.bank.security.CardSecurity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
@@ -22,20 +22,20 @@ import java.util.List;
 
 // Абстрактный сервис для управления банковскими счетами
 @Transactional
-public abstract class AbstractAccountService {
+public abstract class AbstractCardService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
-    protected final AccountRepository accountRepository;
+    protected final CardRepository cardRepository;
     protected final UserRepository userRepository;
-    protected final AccountSecurity accountSecurity;
+    protected final CardSecurity cardSecurity;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public AbstractAccountService(AccountRepository accountRepository,
+    public AbstractCardService(CardRepository cardRepository,
                                   UserRepository userRepository,
-                                  AccountSecurity accountSecurity) {
-        this.accountRepository = accountRepository;
+                                  CardSecurity cardSecurity) {
+        this.cardRepository = cardRepository;
         this.userRepository = userRepository;
-        this.accountSecurity = accountSecurity;
+        this.cardSecurity = cardSecurity;
     }
 
     // Получает текущего аутентифицированного пользователя
@@ -61,20 +61,20 @@ public abstract class AbstractAccountService {
     }
 
     // Проверяет, заблокирован ли счет
-    protected void checkAccountBlock(Account account) {
-        if (account == null) {
-            log.error("Account argument is null!");
+    protected void checkCardBlock(Card card) {
+        if (card == null) {
+            log.error("Card argument is null!");
             throw new IllegalArgumentException("Счет не может быть null");
         }
-        if (Boolean.TRUE.equals(account.getBlocked())) {
-            log.error("Operation attempt on blocked account {}", account.getAccountNumber());
-            throw new AccountBlockedException(account);
+        if (Boolean.TRUE.equals(card.getBlocked())) {
+            log.error("Operation attempt on blocked card {}", card.getCardNumber());
+            throw new CardBlockedException(card);
         }
     }
 
     // Генерирует уникальный 10-значный номер счета
-    public String generateUniqueAccountNumber() {
-        log.info("Generating unique account number");
+    public String generateUniqueCardNumber() {
+        log.info("Generating unique card number");
         String number;
         long min = 1_000_000_000L;   // 10-значное число, первая цифра 1
         long max = 9_999_999_999L;   // максимум, первая цифра 9
@@ -84,79 +84,79 @@ public abstract class AbstractAccountService {
                 long randomNum = Math.abs(secureRandom.nextLong());
                 long valueInRange = min + (randomNum % (max - min + 1)); // [min, max]
                 number = Long.toString(valueInRange);                    // без форматирования
-            } while (accountRepository.existsByAccountNumber(number));
+            } while (cardRepository.existsByCardNumber(number));
 
             return number;
         } catch (Exception e) {
-            log.error("Error generating account number: {}", e.getMessage(), e);
+            log.error("Error generating card number: {}", e.getMessage(), e);
             throw e;
         }
     }
 
 
     // Находит счет по его номеру
-    public Account getAccountByNumber(String accountNumber) {
-        log.info("Searching account by number: {}", accountNumber);
+    public Card getCardByNumber(String cardNumber) {
+        log.info("Searching card by number: {}", cardNumber);
         try {
-            return accountRepository.findByAccountNumber(accountNumber)
+            return cardRepository.findByCardNumber(cardNumber)
                     .orElseThrow(() -> {
-                        log.error("Account not found with number {}", accountNumber);
-                        return new ResourceNotFoundException("Account", "accountNumber", accountNumber);
+                        log.error("Card not found with number {}", cardNumber);
+                        return new ResourceNotFoundException("Card", "cardNumber", cardNumber);
                     });
         } catch (Exception e) {
-            log.error("Error searching account by number: {}", e.getMessage(), e);
+            log.error("Error searching card by number: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Возвращает все счета пользователя или все счета для администратора
-    public List<Account> findAll(User currentUser) {
-        log.info("Retrieving accounts list for user: {}", currentUser.getUsername());
+    public List<Card> findAll(User currentUser) {
+        log.info("Retrieving cards list for user: {}", currentUser.getUsername());
         try {
             if (currentUser.getRole() == Role.ADMIN) {
-                return accountRepository.findAll();
+                return cardRepository.findAll();
             } else {
-                return accountRepository.findByUserUserId(currentUser.getUserId());
+                return cardRepository.findByUserUserId(currentUser.getUserId());
             }
         } catch (Exception e) {
-            log.error("Error retrieving accounts list: {}", e.getMessage(), e);
+            log.error("Error retrieving cards list: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Находит счет по ID
-    public Account findById(Long id) {
-        log.info("Searching account by ID: {}", id);
+    public Card findById(Long id) {
+        log.info("Searching card by ID: {}", id);
         try {
-            return accountRepository.findById(id)
+            return cardRepository.findById(id)
                     .orElseThrow(() -> {
-                        log.error("Account not found with ID {}", id);
-                        return new ResourceNotFoundException("Account", "id", id);
+                        log.error("Card not found with ID {}", id);
+                        return new ResourceNotFoundException("Card", "id", id);
                     });
         } catch (Exception e) {
-            log.error("Error searching account by ID: {}", e.getMessage(), e);
+            log.error("Error searching card by ID: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Обновляет информацию о счете
-    public Account update(Account account) {
-        log.info("Updating account with ID: {}", account.getAccountNumber());
+    public Card update(Card card) {
+        log.info("Updating card with ID: {}", card.getCardNumber());
         try {
-            return accountRepository.save(account);
+            return cardRepository.save(card);
         } catch (Exception e) {
-            log.error("Error updating account: {}", e.getMessage(), e);
+            log.error("Error updating card: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Удаляет счет по ID
     public void deleteById(Long id) {
-        log.info("Deleting account by ID: {}", id);
+        log.info("Deleting card by ID: {}", id);
         try {
-            accountRepository.deleteById(id);
+            cardRepository.deleteById(id);
         } catch (Exception e) {
-            log.error("Error deleting account by ID: {}", e.getMessage(), e);
+            log.error("Error deleting card by ID: {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -164,14 +164,14 @@ public abstract class AbstractAccountService {
     // Блокирует счет (только для администратора)
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public Account blockAccount(String accountNumber) {
-        log.info("Admin blocking account: {}", accountNumber);
+    public Card blockCard(String cardNumber) {
+        log.info("Admin blocking card: {}", cardNumber);
         try {
-            Account account = getAccountByNumber(accountNumber);
-            account.setBlocked(true);
-            return accountRepository.save(account);
+            Card card = getCardByNumber(cardNumber);
+            card.setBlocked(true);
+            return cardRepository.save(card);
         } catch (Exception e) {
-            log.error("Error while blocking account: {}", e.getMessage(), e);
+            log.error("Error while blocking card: {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -179,93 +179,93 @@ public abstract class AbstractAccountService {
     // Разблокирует счет (только для администратора)
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public Account unblockAccount(String accountNumber) {
-        log.info("Admin unblocking account: {}", accountNumber);
+    public Card unblockCard(String cardNumber) {
+        log.info("Admin unblocking card: {}", cardNumber);
         try {
-            Account account = getAccountByNumber(accountNumber);
-            account.setBlocked(false);
-            return accountRepository.save(account);
+            Card card = getCardByNumber(cardNumber);
+            card.setBlocked(false);
+            return cardRepository.save(card);
         } catch (Exception e) {
-            log.error("Error while unblocking account: {}", e.getMessage(), e);
+            log.error("Error while unblocking card: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Получает счет по ID
-    protected Account getAccountById(Long accountId) {
+    protected Card getCardById(Long cardId) {
         try {
-            return accountRepository.findById(accountId)
+            return cardRepository.findById(cardId)
                     .orElseThrow(() -> {
-                        log.error("Account not found with ID {}", accountId);
-                        return new ResourceNotFoundException("Account", "id", accountId);
+                        log.error("Card not found with ID {}", cardId);
+                        return new ResourceNotFoundException("Card", "id", cardId);
                     });
         } catch (Exception e) {
-            log.error("Error getting account by ID: {}", e.getMessage(), e);
+            log.error("Error getting card by ID: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Обрабатывает операцию пополнения счета
-    protected Account processDeposit(Account account, BigDecimal amount) {
-        log.info("Depositing to account {} amount {}", account.getAccountNumber(), amount);
+    protected Card processDeposit(Card card, BigDecimal amount) {
+        log.info("Depositing to card {} amount {}", card.getCardNumber(), amount);
         try {
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
                 log.error("Deposit attempt with non-positive amount: {}", amount);
                 throw new IllegalArgumentException("Сумма пополнения должна быть больше нуля");
             }
-            checkAccountBlock(account);
+            checkCardBlock(card);
 
-            account.setBalance(account.getBalance().add(amount));
-            return account;
+            card.setBalance(card.getBalance().add(amount));
+            return card;
         } catch (Exception e) {
-            log.error("Error depositing to account: {}", e.getMessage(), e);
+            log.error("Error depositing to card: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Обрабатывает операцию снятия со счета
-    protected Account processWithdraw(Account account, BigDecimal amount) {
-        log.info("Withdrawing from account {} amount {}", account.getAccountNumber(), amount);
+    protected Card processWithdraw(Card card, BigDecimal amount) {
+        log.info("Withdrawing from card {} amount {}", card.getCardNumber(), amount);
         try {
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
                 log.error("Withdrawal attempt with non-positive amount: {}", amount);
                 throw new IllegalArgumentException("Сумма снятия должна быть больше нуля");
             }
-            checkAccountBlock(account);
-            BigDecimal balance = account.getBalance();
+            checkCardBlock(card);
+            BigDecimal balance = card.getBalance();
             if (amount.compareTo(balance) > 0) {
-                log.error("Insufficient funds: account {}, balance {}, attempt to withdraw {}", account.getAccountNumber(), balance, amount);
+                log.error("Insufficient funds: card {}, balance {}, attempt to withdraw {}", card.getCardNumber(), balance, amount);
                 throw new InvalidOperationException("Недостаточно средств");
             }
-            account.setBalance(balance.subtract(amount));
-            return account;
+            card.setBalance(balance.subtract(amount));
+            return card;
         } catch (Exception e) {
-            log.error("Error withdrawing from account: {}", e.getMessage(), e);
+            log.error("Error withdrawing from card: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Удаляет счет пользователем только если баланс равен нулю
-    public void deleteAccount(String accountNumber) {
-        log.info("User deleting account: {}", accountNumber);
+    public void deleteCard(String cardNumber) {
+        log.info("User deleting card: {}", cardNumber);
         try {
             User user = getCurrentUser();
-            Account account = getAccountByNumber(accountNumber);
-            checkAccountBlock(account);
+            Card card = getCardByNumber(cardNumber);
+            checkCardBlock(card);
 
-            if (!account.getUser().getUserId().equals(user.getUserId())) {
-                log.error("Attempt to delete account by non-owner, userId={}, owner={}", user.getUserId(), account.getUser().getUserId());
+            if (!card.getUser().getUserId().equals(user.getUserId())) {
+                log.error("Attempt to delete card by non-owner, userId={}, owner={}", user.getUserId(), card.getUser().getUserId());
                 throw new AccessDeniedException("Пользователь не является владельцем счета");
             }
 
-            if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {
-                log.error("Attempt to delete account with non-zero balance: {}, balance={}", account.getAccountNumber(), account.getBalance());
+            if (card.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+                log.error("Attempt to delete card with non-zero balance: {}, balance={}", card.getCardNumber(), card.getBalance());
                 throw new InvalidOperationException("Невозможно удалить счет с ненулевым балансом");
             }
 
-            accountRepository.deleteByAccountNumber(accountNumber);
+            cardRepository.deleteByCardNumber(cardNumber);
         } catch (Exception e) {
-            log.error("Error deleting account by user: {}", e.getMessage(), e);
+            log.error("Error deleting card by user: {}", e.getMessage(), e);
             throw e;
         }
     }

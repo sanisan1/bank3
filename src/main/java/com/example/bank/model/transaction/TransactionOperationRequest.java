@@ -11,8 +11,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class TransactionOperationRequest {
 
-    @NotBlank(message = "Account number is required")
-    private String accountNumber;
+    @NotBlank(message = "Card number is required")
+    private String cardNumber;
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")

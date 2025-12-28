@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-public class DebitAccountIntegrationTest {
+public class DebitCardIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -35,7 +35,7 @@ public class DebitAccountIntegrationTest {
     private Long userId;
     private String adminToken;
     private String userToken;
-    private String debitAccountNumber;
+    private String debitCardNumber;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -81,7 +81,7 @@ public class DebitAccountIntegrationTest {
 
 
         // Создаем дебетовый аккаунт
-        String accountResponse = mockMvc.perform(post("/api/debit-accounts")
+        String cardResponse = mockMvc.perform(post("/api/debit-cards")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
@@ -90,24 +90,24 @@ public class DebitAccountIntegrationTest {
                 .getContentAsString();
 
         // Извлекаем номер счета из ответа
-        JsonNode accountJson = objectMapper.readTree(accountResponse);
-        debitAccountNumber = accountJson.get("accountNumber").asText();
+        JsonNode cardJson = objectMapper.readTree(cardResponse);
+        debitCardNumber = cardJson.get("cardNumber").asText();
     }
 
     @Test
-    public void CreateDebitAccount_asUser_createsAccount() throws Exception {
-        mockMvc.perform(post("/api/debit-accounts")
+    public void CreateDebitCard_asUser_createsCard() throws Exception {
+        mockMvc.perform(post("/api/debit-cards")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.accountNumber").exists())
+                .andExpect(jsonPath("$.cardNumber").exists())
                 .andExpect(jsonPath("$.balance").value(0.00));
     }
 
 
     @Test
-    public void deleteDebitAccount_asUser_deletesAccount() throws Exception {
-        mockMvc.perform(delete("/api/debit-accounts/{accountNumber}", debitAccountNumber)
+    public void deleteDebitCard_asUser_deletesCard() throws Exception {
+        mockMvc.perform(delete("/api/debit-cards/{cardNumber}", debitCardNumber)
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());

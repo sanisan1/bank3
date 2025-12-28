@@ -10,8 +10,8 @@ public class TransactionMapper {
     public static TransactionResponse toDto(Transaction transaction) {
         TransactionResponse dto = new TransactionResponse();
         dto.setId(transaction.getId());
-        dto.setFromAccount(transaction.getFromAccount());
-        dto.setToAccount(transaction.getToAccount());
+        dto.setFromCard(transaction.getFromCard());
+        dto.setToCard(transaction.getToCard());
         dto.setAmount(transaction.getAmount());
         dto.setTimestamp(transaction.getTimestamp());
         dto.setType(transaction.getType());

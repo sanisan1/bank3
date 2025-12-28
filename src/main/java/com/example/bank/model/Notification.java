@@ -25,8 +25,8 @@ public class Notification {
     @NotNull
     private String title; // короткое описание ("Снятие средств", "Зачисление", "Перевод")
 
-    private String accountTransferTo;
-    private String accountNumber;
+    private String cardTransferTo;
+    private String cardNumber;
 
     private String comment;
     @NotNull

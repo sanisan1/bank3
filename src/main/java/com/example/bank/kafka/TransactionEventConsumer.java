@@ -36,8 +36,8 @@ public class TransactionEventConsumer {
 
             EventDTO event = objectMapper.readValue(message, EventDTO.class);
 
-            log.info("💡 [KAFKA] Получено событие: type={}, account={}, amount={}",
-                   event.getType(), event.getAccountNumber(), event.getAmount());
+            log.info("💡 [KAFKA] Получено событие: type={}, card={}, amount={}",
+                   event.getType(), event.getCardNumber(), event.getAmount());
             Notification notification = NotificationMapper.toNotification(event);
             log.info("notification.getMessage() = " + notification.getMessage());
             notificationRepository.save(notification);

@@ -144,8 +144,8 @@
 							"script": {
 								"exec": [
 									"const response = pm.response.json();\r",
-									"const accountNumber = response.accountNumber;\r",
-									"pm.collectionVariables.set(\"debAccNum\", accountNumber);"
+									"const cardNumber = response.cardNumber;\r",
+									"pm.collectionVariables.set(\"debAccNum\", cardNumber);"
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -166,7 +166,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/debit-accounts",
+							"raw": "http://localhost:8080/api/debit-cards",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -174,7 +174,7 @@
 							"port": "8080",
 							"path": [
 								"api",
-								"debit-accounts"
+								"debit-cards"
 							]
 						}
 					},
@@ -215,7 +215,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"accountNumber\": {{debAccNum}},\n  \"amount\": 5000,\n  \"comment\": \"Пополнение\"\n}",
+							"raw": "{\n  \"cardNumber\": {{debAccNum}},\n  \"amount\": 5000,\n  \"comment\": \"Пополнение\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -261,7 +261,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"accountNumber\": {{debAccNum}},\r\n  \"amount\": 1000,\r\n  \"comment\": \"Снятие\"\r\n}",
+							"raw": "{\r\n  \"cardNumber\": {{debAccNum}},\r\n  \"amount\": 1000,\r\n  \"comment\": \"Снятие\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -296,8 +296,8 @@
 									"    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
 									"});",
 									"const response = pm.response.json();",
-									"const accountNumber = response.accountNumber;",
-									"pm.collectionVariables.set(\"CredAccNum\", accountNumber);",
+									"const cardNumber = response.cardNumber;",
+									"pm.collectionVariables.set(\"CredAccNum\", cardNumber);",
 									"",
 									""
 								],
@@ -331,7 +331,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/credit-accounts/create",
+							"raw": "http://localhost:8080/api/credit-cards/create",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -339,7 +339,7 @@
 							"port": "8080",
 							"path": [
 								"api",
-								"credit-accounts",
+								"credit-cards",
 								"create"
 							]
 						},
@@ -353,7 +353,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/accounts/getAccounts",
+							"raw": "http://localhost:8080/api/cards/getCards",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -361,8 +361,8 @@
 							"port": "8080",
 							"path": [
 								"api",
-								"accounts",
-								"getAccounts"
+								"cards",
+								"getCards"
 							]
 						}
 					},
@@ -375,7 +375,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"accountNumber\": {{CredAccNum}},\r\n  \"amount\": 1000\r\n}",
+							"raw": "{\r\n  \"cardNumber\": {{CredAccNum}},\r\n  \"amount\": 1000\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -405,7 +405,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"accountNumber\": {{CredAccNum}},\r\n  \"amount\": 3000\r\n\r\n}",
+							"raw": "{\r\n  \"cardNumber\": {{CredAccNum}},\r\n  \"amount\": 3000\r\n\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -435,7 +435,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"fromAccount\": {{CredAccNum}},\r\n  \"toAccount\": {{debAccNum}},\r\n  \"amount\": 250,\r\n  \"comment\": \"Перевод\"\r\n}",
+							"raw": "{\r\n  \"fromCard\": {{CredAccNum}},\r\n  \"toCard\": {{debAccNum}},\r\n  \"amount\": 250,\r\n  \"comment\": \"Перевод\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -551,7 +551,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/accounts/getByNumber/:accountNumber",
+							"raw": "http://localhost:8080/api/cards/getByNumber/:cardNumber",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -559,13 +559,13 @@
 							"port": "8080",
 							"path": [
 								"api",
-								"accounts",
+								"cards",
 								"getByNumber",
-								":accountNumber"
+								":cardNumber"
 							],
 							"variable": [
 								{
-									"key": "accountNumber",
+									"key": "cardNumber",
 									"value": "{{debAccNum}}"
 								}
 							]
@@ -579,7 +579,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/accounts/getByNumber/:accountNumber",
+							"raw": "http://localhost:8080/api/cards/getByNumber/:cardNumber",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -587,13 +587,13 @@
 							"port": "8080",
 							"path": [
 								"api",
-								"accounts",
+								"cards",
 								"getByNumber",
-								":accountNumber"
+								":cardNumber"
 							],
 							"variable": [
 								{
-									"key": "accountNumber",
+									"key": "cardNumber",
 									"value": "{{CredAccNum}}"
 								}
 							]
@@ -726,8 +726,8 @@
 							"script": {
 								"exec": [
 									"const response = pm.response.json();\r",
-									"const accountNumber = response.accountNumber;\r",
-									"pm.collectionVariables.set(\"debAccNumUser2\", accountNumber);"
+									"const cardNumber = response.cardNumber;\r",
+									"pm.collectionVariables.set(\"debAccNumUser2\", cardNumber);"
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -759,7 +759,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/debit-accounts",
+							"raw": "http://localhost:8080/api/debit-cards",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -767,7 +767,7 @@
 							"port": "8080",
 							"path": [
 								"api",
-								"debit-accounts"
+								"debit-cards"
 							]
 						}
 					},
@@ -796,7 +796,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"accountNumber\": {{debAccNumUser2}},\n  \"amount\": 50000,\n  \"comment\": \"Пополнение\"\n}",
+							"raw": "{\n  \"cardNumber\": {{debAccNumUser2}},\n  \"amount\": 50000,\n  \"comment\": \"Пополнение\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -827,7 +827,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"fromAccount\": {{debAccNumUser2}},\r\n  \"toAccount\": {{debAccNum}},\r\n  \"amount\": 1000,\r\n  \"comment\": \"Перевод\"\r\n}",
+							"raw": "{\r\n  \"fromCard\": {{debAccNumUser2}},\r\n  \"toCard\": {{debAccNum}},\r\n  \"amount\": 1000,\r\n  \"comment\": \"Перевод\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -945,7 +945,7 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/credit-accounts/accrue-interest",
+							"raw": "http://localhost:8080/api/credit-cards/accrue-interest",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -953,7 +953,7 @@
 							"port": "8080",
 							"path": [
 								"api",
-								"credit-accounts",
+								"credit-cards",
 								"accrue-interest"
 							]
 						}

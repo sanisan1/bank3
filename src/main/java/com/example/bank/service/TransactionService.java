@@ -4,16 +4,16 @@ import com.example.bank.Enums.OperationType;
 import com.example.bank.exception.InvalidOperationException;
 import com.example.bank.exception.ResourceNotFoundException;
 import com.example.bank.kafka.TransactionEventProducer;
-import com.example.bank.mapper.AccountMapper;
+import com.example.bank.mapper.CardMapper;
 import com.example.bank.mapper.NotificationMapper;
 import com.example.bank.mapper.TransactionMapper;
-import com.example.bank.model.account.Account;
-import com.example.bank.model.account.AccountDto;
-import com.example.bank.model.account.creditAccount.CreditAccount;
-import com.example.bank.model.account.debitAccount.DebitAccount;
+import com.example.bank.model.card.Card;
+import com.example.bank.model.card.CardDto;
+import com.example.bank.model.card.creditCard.CreditCard;
+import com.example.bank.model.card.debitCard.DebitCard;
 import com.example.bank.model.transaction.Transaction;
 import com.example.bank.model.transaction.TransactionResponse;
-import com.example.bank.repository.AccountRepository;
+import com.example.bank.repository.CardRepository;
 import com.example.bank.repository.TransactionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,51 +34,51 @@ public class TransactionService {
 
     private final TransactionEventProducer eventProducer;
 
-    private final AccountRepository accountRepository;
+    private final CardRepository cardRepository;
     private final TransactionRepository transactionRepository;
-    private final Map<Class<? extends Account>, AbstractAccountService> serviceMap;
-    private final AccountServiceImpl accountService;
+    private final Map<Class<? extends Card>, AbstractCardService> serviceMap;
+    private final CardServiceImpl cardService;
 
 
     public TransactionService(
-            AccountRepository accountRepository,
+            CardRepository cardRepository,
             TransactionRepository transactionRepository,
-            CreditAccountService creditAccountService,
-            DebitAccountService debitAccountService,
-            TransactionEventProducer eventProducer, AccountServiceImpl accountService   // <---- обязательно!
+            CreditCardService creditCardService,
+            DebitCardService debitCardService,
+            TransactionEventProducer eventProducer, CardServiceImpl cardService   // <---- обязательно!
           ) {
-        this.accountRepository = accountRepository;
+        this.cardRepository = cardRepository;
         this.transactionRepository = transactionRepository;
         this.eventProducer = eventProducer;
-        this.accountService = accountService;
+        this.cardService = cardService;
         this.serviceMap = new HashMap<>();
-        this.serviceMap.put(CreditAccount.class, creditAccountService);
-        this.serviceMap.put(DebitAccount.class, debitAccountService);
+        this.serviceMap.put(CreditCard.class, creditCardService);
+        this.serviceMap.put(DebitCard.class, debitCardService);
     }
 
 
-    private Account getAccountByNumber(String accountNumber) {
-        return accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found", "AccountNumber", accountNumber));
+    private Card getCardByNumber(String cardNumber) {
+        return cardRepository.findByCardNumber(cardNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found", "CardNumber", cardNumber));
     }
 
     // Операция пополнения счета
     @Transactional
-    @PreAuthorize("@accountSecurity.isOwner(#accountNumber)")
-    public AccountDto deposit(String accountNumber, BigDecimal amount, String comment) {
-        log.info("Deposit to account {}: amount {}", accountNumber, amount);
+    @PreAuthorize("@cardSecurity.isOwner(#cardNumber)")
+    public CardDto deposit(String cardNumber, BigDecimal amount, String comment) {
+        log.info("Deposit to card {}: amount {}", cardNumber, amount);
         try {
-            Account acc = getAccountByNumber(accountNumber);
-            AbstractAccountService service = serviceMap.get(acc.getClass());
+            Card acc = getCardByNumber(cardNumber);
+            AbstractCardService service = serviceMap.get(acc.getClass());
             if (service == null) {
-                log.error("Unsupported account type for deposit: {}", acc.getClass());
-                throw new InvalidOperationException("Unsupported account type");
+                log.error("Unsupported card type for deposit: {}", acc.getClass());
+                throw new InvalidOperationException("Unsupported card type");
             }
 
-            Account updatedAccount = service.processDeposit(acc, amount);
+            Card updatedCard = service.processDeposit(acc, amount);
 
             Transaction transaction = new Transaction();
-            transaction.setToAccount(accountNumber);
+            transaction.setToCard(cardNumber);
             transaction.setAmount(amount);
             transaction.setType(OperationType.deposit);
             transaction.setComment(comment);
@@ -87,30 +87,30 @@ public class TransactionService {
             eventProducer.sendTransactionEvent(NotificationMapper.toEventDTO(transaction));
 
 
-            return AccountMapper.toDto(updatedAccount);
+            return CardMapper.toDto(updatedCard);
         } catch (Exception e) {
-            log.error("Deposit error for account {}: {}", accountNumber, e.getMessage(), e);
+            log.error("Deposit error for card {}: {}", cardNumber, e.getMessage(), e);
             throw e;
         }
     }
 
     // Операция снятия со счета
     @Transactional
-    @PreAuthorize("@accountSecurity.isOwner(#accountNumber)")
-    public AccountDto withdraw(String accountNumber, BigDecimal amount, String comment) {
-        log.info("Withdraw from account {}: amount {}", accountNumber, amount);
+    @PreAuthorize("@cardSecurity.isOwner(#cardNumber)")
+    public CardDto withdraw(String cardNumber, BigDecimal amount, String comment) {
+        log.info("Withdraw from card {}: amount {}", cardNumber, amount);
         try {
-            Account acc = getAccountByNumber(accountNumber);
-            AbstractAccountService service = serviceMap.get(acc.getClass());
+            Card acc = getCardByNumber(cardNumber);
+            AbstractCardService service = serviceMap.get(acc.getClass());
             if (service == null) {
-                log.error("Unsupported account type for withdrawal: {}", acc.getClass());
-                throw new InvalidOperationException("Unsupported account type");
+                log.error("Unsupported card type for withdrawal: {}", acc.getClass());
+                throw new InvalidOperationException("Unsupported card type");
             }
 
-            Account updatedAccount = service.processWithdraw(acc, amount);
+            Card updatedCard = service.processWithdraw(acc, amount);
 
             Transaction transaction = new Transaction();
-            transaction.setFromAccount(acc.getAccountNumber());
+            transaction.setFromCard(acc.getCardNumber());
             transaction.setAmount(amount);
             transaction.setType(OperationType.withdraw);
             transaction.setComment(comment);
@@ -121,39 +121,39 @@ public class TransactionService {
             eventProducer.sendTransactionEvent(NotificationMapper.toEventDTO(transaction));
 
 
-            return AccountMapper.toDto(updatedAccount);
+            return CardMapper.toDto(updatedCard);
         } catch (Exception e) {
-            log.error("Withdraw error for account {}: {}", accountNumber, e.getMessage(), e);
+            log.error("Withdraw error for card {}: {}", cardNumber, e.getMessage(), e);
             throw e;
         }
     }
 
     // Операция перевода средств
     @Transactional
-    @PreAuthorize("@accountSecurity.isOwner(#fromNumber)")
-    public AccountDto transfer(String fromNumber, String toNumber, BigDecimal amount, String comment) {
+    @PreAuthorize("@cardSecurity.isOwner(#fromNumber)")
+    public CardDto transfer(String fromNumber, String toNumber, BigDecimal amount, String comment) {
         if (fromNumber.equals(toNumber)) {
             throw new IllegalArgumentException("Невозможно перевести средства на тот же счёт");
         }
 
         log.info("Transfer: {} → {}, amount {}", fromNumber, toNumber, amount);
         try {
-            Account fromAcc = getAccountByNumber(fromNumber);
-            Account toAcc = getAccountByNumber(toNumber);
+            Card fromAcc = getCardByNumber(fromNumber);
+            Card toAcc = getCardByNumber(toNumber);
 
-            AbstractAccountService fromService = serviceMap.get(fromAcc.getClass());
-            AbstractAccountService toService = serviceMap.get(toAcc.getClass());
+            AbstractCardService fromService = serviceMap.get(fromAcc.getClass());
+            AbstractCardService toService = serviceMap.get(toAcc.getClass());
             if (fromService == null || toService == null) {
-                log.error("Unsupported account type for transfer: {} or {}", fromAcc.getClass(), toAcc.getClass());
-                throw new InvalidOperationException("Unsupported account type");
+                log.error("Unsupported card type for transfer: {} or {}", fromAcc.getClass(), toAcc.getClass());
+                throw new InvalidOperationException("Unsupported card type");
             }
 
             fromAcc = fromService.processWithdraw(fromAcc, amount);
             toService.processDeposit(toAcc, amount);
 
             Transaction transaction = new Transaction();
-            transaction.setFromAccount(fromNumber);
-            transaction.setToAccount(toNumber);
+            transaction.setFromCard(fromNumber);
+            transaction.setToCard(toNumber);
             transaction.setAmount(amount);
             transaction.setType(OperationType.transfer);
             transaction.setComment(comment);
@@ -163,7 +163,7 @@ public class TransactionService {
             eventProducer.sendTransactionEvent(NotificationMapper.toEventDTO(transaction));
 
 
-            return AccountMapper.toDto(fromAcc);
+            return CardMapper.toDto(fromAcc);
 
         } catch (Exception e) {
             log.error("Transfer error from {} to {}: {}", fromNumber, toNumber, e.getMessage(), e);
@@ -188,9 +188,9 @@ public class TransactionService {
     }
 
     // Получить транзакции по счету
-    @PreAuthorize("@accountSecurity.isOwner(#accountNumber)")
-    public List<TransactionResponse> getTransactionsByAccount(String accountNumber) {
-        List<Transaction> transactions = transactionRepository.findByFromAccountOrToAccount(accountNumber, accountNumber);
+    @PreAuthorize("@cardSecurity.isOwner(#cardNumber)")
+    public List<TransactionResponse> getTransactionsByCard(String cardNumber) {
+        List<Transaction> transactions = transactionRepository.findByFromCardOrToCard(cardNumber, cardNumber);
         return transactions.stream()
                 .map(TransactionMapper::toDto)
                 .collect(Collectors.toList());
@@ -198,18 +198,18 @@ public class TransactionService {
 
     // Получить транзакции по пользователю
     public List<TransactionResponse> getTransactionsByUser(Long userId) {
-        List<Account> userAccounts = accountRepository.findByUserUserId(userId);
-        List<String> accountNumbers = userAccounts.stream()
-                .map(Account::getAccountNumber)
+        List<Card> userCards = cardRepository.findByUserUserId(userId);
+        List<String> cardNumbers = userCards.stream()
+                .map(Card::getCardNumber)
                 .collect(Collectors.toList());
 
-        if (accountNumbers.isEmpty()) {
+        if (cardNumbers.isEmpty()) {
             return List.of();
         }
 
-        List<Transaction> transactions = transactionRepository.findByFromAccountInOrToAccountIn(
-                accountNumbers,
-                accountNumbers
+        List<Transaction> transactions = transactionRepository.findByFromCardInOrToCardIn(
+                cardNumbers,
+                cardNumbers
         );
 
         return transactions.stream()
@@ -218,7 +218,7 @@ public class TransactionService {
     }
 
     public List<TransactionResponse> getTransactionsForUser() {
-        return getTransactionsByUser(accountService.getCurrentUser().getUserId());
+        return getTransactionsByUser(cardService.getCurrentUser().getUserId());
     }
 
 

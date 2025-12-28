@@ -1,6 +1,6 @@
 package com.example.bank.integration;
 
-import com.example.bank.model.account.creditAccount.CreditAccountCreateRequest;
+import com.example.bank.model.card.creditCard.CreditCardCreateRequest;
 import com.example.bank.model.transaction.TransactionOperationRequest;
 import com.example.bank.model.transaction.TransferRequest;
 import com.example.bank.model.user.CreateUserDto;
@@ -47,8 +47,8 @@ public class TransactionIntegrationTest {
     private Long userId;
     private String adminToken;
     private String userToken;
-    private String creditAccountNumber;
-    private String debitAccountNumber;
+    private String creditCardNumber;
+    private String debitCardNumber;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -95,13 +95,13 @@ public class TransactionIntegrationTest {
 
 
         // Создаем кредитный аккаунт через администратора
-        CreditAccountCreateRequest request = new CreditAccountCreateRequest();
+        CreditCardCreateRequest request = new CreditCardCreateRequest();
         request.setUserId(userId);
         request.setCreditLimit(new BigDecimal("5000.00"));
         request.setInterestRate(new BigDecimal("0.15"));
         request.setGracePeriod(30);
 
-        String creditAccountResponse = mockMvc.perform(post("/api/credit-accounts/createforadmin")
+        String creditCardResponse = mockMvc.perform(post("/api/credit-cards/createforadmin")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -111,11 +111,11 @@ public class TransactionIntegrationTest {
                 .getContentAsString();
 
         // Извлекаем номер кредитного счета из ответа
-        JsonNode creditAccountJson = objectMapper.readTree(creditAccountResponse);
-        creditAccountNumber = creditAccountJson.get("accountNumber").asText();
+        JsonNode creditCardJson = objectMapper.readTree(creditCardResponse);
+        creditCardNumber = creditCardJson.get("cardNumber").asText();
 
         // Создаем дебетовый аккаунт
-        String debitAccountResponse = mockMvc.perform(post("/api/debit-accounts")
+        String debitCardResponse = mockMvc.perform(post("/api/debit-cards")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
@@ -124,15 +124,15 @@ public class TransactionIntegrationTest {
                 .getContentAsString();
 
         // Извлекаем номер дебетового счета из ответа
-        JsonNode debitAccountJson = objectMapper.readTree(debitAccountResponse);
-        debitAccountNumber = debitAccountJson.get("accountNumber").asText();
+        JsonNode debitCardJson = objectMapper.readTree(debitCardResponse);
+        debitCardNumber = debitCardJson.get("cardNumber").asText();
     }
 
     @Test
-    public void depositToAccount_asUser_succeeds() throws Exception {
+    public void depositToCard_asUser_succeeds() throws Exception {
         // Подготовка данных для депозита
         TransactionOperationRequest request = new TransactionOperationRequest();
-        request.setAccountNumber(debitAccountNumber);
+        request.setCardNumber(debitCardNumber);
         request.setAmount(new BigDecimal("100.00"));
         request.setComment("Test deposit");
 
@@ -142,15 +142,15 @@ public class TransactionIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountNumber").value(debitAccountNumber))
+                .andExpect(jsonPath("$.cardNumber").value(debitCardNumber))
                 .andExpect(jsonPath("$.balance").value(100.00));
     }
 
     @Test
-    public void withdrawFromAccount_asUser_succeeds() throws Exception {
+    public void withdrawFromCard_asUser_succeeds() throws Exception {
         // Сначала пополняем счет
         TransactionOperationRequest depositRequest = new TransactionOperationRequest();
-        depositRequest.setAccountNumber(debitAccountNumber);
+        depositRequest.setCardNumber(debitCardNumber);
         depositRequest.setAmount(new BigDecimal("100.00"));
         depositRequest.setComment("Initial deposit");
 
@@ -162,7 +162,7 @@ public class TransactionIntegrationTest {
 
         // Затем снимаем средства
         TransactionOperationRequest withdrawRequest = new TransactionOperationRequest();
-        withdrawRequest.setAccountNumber(debitAccountNumber);
+        withdrawRequest.setCardNumber(debitCardNumber);
         withdrawRequest.setAmount(new BigDecimal("50.00"));
         withdrawRequest.setComment("Test withdrawal");
 
@@ -171,15 +171,15 @@ public class TransactionIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(withdrawRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountNumber").value(debitAccountNumber))
+                .andExpect(jsonPath("$.cardNumber").value(debitCardNumber))
                 .andExpect(jsonPath("$.balance").value(50.00));
     }
 
     @Test
-    public void transferBetweenAccounts_asUser_succeeds() throws Exception {
+    public void transferBetweenCards_asUser_succeeds() throws Exception {
         // Сначала пополняем первый счет
         TransactionOperationRequest depositRequest = new TransactionOperationRequest();
-        depositRequest.setAccountNumber(debitAccountNumber);
+        depositRequest.setCardNumber(debitCardNumber);
         depositRequest.setAmount(new BigDecimal("200.00"));
         depositRequest.setComment("Initial deposit");
 
@@ -191,8 +191,8 @@ public class TransactionIntegrationTest {
 
         // Переводим средства со счета на счет
         TransferRequest transferRequest = new TransferRequest();
-        transferRequest.setFromAccount(debitAccountNumber);
-        transferRequest.setToAccount(creditAccountNumber);
+        transferRequest.setFromCard(debitCardNumber);
+        transferRequest.setToCard(creditCardNumber);
         transferRequest.setAmount(new BigDecimal("100.00"));
         transferRequest.setComment("Test transfer");
 
@@ -201,15 +201,15 @@ public class TransactionIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(transferRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountNumber").value(debitAccountNumber))
+                .andExpect(jsonPath("$.cardNumber").value(debitCardNumber))
                 .andExpect(jsonPath("$.balance").value(100.00));
     }
 
     @Test
-    public void getTransactionsByAccount_asUser_succeeds() throws Exception {
+    public void getTransactionsByCard_asUser_succeeds() throws Exception {
         // Сначала выполняем операцию, чтобы были транзакции
         TransactionOperationRequest depositRequest = new TransactionOperationRequest();
-        depositRequest.setAccountNumber(debitAccountNumber);
+        depositRequest.setCardNumber(debitCardNumber);
         depositRequest.setAmount(new BigDecimal("100.00"));
         depositRequest.setComment("Test deposit");
 
@@ -220,12 +220,12 @@ public class TransactionIntegrationTest {
                 .andExpect(status().isOk());
 
         // Получаем список транзакций
-        mockMvc.perform(get("/api/transactions/by-account/{accountNumber}", debitAccountNumber)
+        mockMvc.perform(get("/api/transactions/by-card/{cardNumber}", debitCardNumber)
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].toAccount").value(debitAccountNumber))
+                .andExpect(jsonPath("$[0].toCard").value(debitCardNumber))
                 .andExpect(jsonPath("$[0].amount").value(100.00));
     }
 
@@ -233,7 +233,7 @@ public class TransactionIntegrationTest {
     public void getAllTransactions_asAdmin_succeeds() throws Exception {
         // Сначала выполняем операцию, чтобы были транзакции
         TransactionOperationRequest depositRequest = new TransactionOperationRequest();
-        depositRequest.setAccountNumber(debitAccountNumber);
+        depositRequest.setCardNumber(debitCardNumber);
         depositRequest.setAmount(new BigDecimal("100.00"));
         depositRequest.setComment("Test deposit");
 

@@ -1,6 +1,6 @@
-package com.example.bank.model.account.creditAccount;
+package com.example.bank.model.card.creditCard;
 
-import com.example.bank.model.account.Account;
+import com.example.bank.model.card.Card;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -21,8 +21,8 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "credit_accounts")
-public class CreditAccount extends Account {
+@Table(name = "credit_cards")
+public class CreditCard extends Card {
 
     // Кредитный лимит счета
     @NotNull

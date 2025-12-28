@@ -2,11 +2,11 @@ package com.example.bank.service;
 
 import com.example.bank.Enums.Role;
 import com.example.bank.exception.ResourceNotFoundException;
-import com.example.bank.model.account.debitAccount.DebitAccount;
-import com.example.bank.Enums.AccountType;
+import com.example.bank.model.card.debitCard.DebitCard;
+import com.example.bank.Enums.CardType;
 import com.example.bank.model.user.CreateUserDto;
 import com.example.bank.model.user.User;
-import com.example.bank.repository.AccountRepository;
+import com.example.bank.repository.CardRepository;
 import com.example.bank.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,9 +38,9 @@ public class UserServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private AccountRepository accountRepository;
+    private CardRepository cardRepository;
     
-    private DebitAccount account;
+    private DebitCard card;
 
 
 
@@ -77,10 +77,10 @@ public class UserServiceTest {
         expectedUser.setRole(Role.USER);
 
 
-        account = new DebitAccount();
-        account.setId(1L);
-        account.setAccountNumber("1234567890");
-        account.setUser(expectedUser);
+        card = new DebitCard();
+        card.setId(1L);
+        card.setCardNumber("1234567890");
+        card.setUser(expectedUser);
     }
 
     @Test
@@ -144,7 +144,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void setMainAccountTest() {
+    void setMainCardTest() {
         // Мокаем SecurityContext и Authentication
         Authentication authentication = mock(Authentication.class);
         SecurityContext securityContext = mock(SecurityContext.class);
@@ -158,14 +158,14 @@ public class UserServiceTest {
 
         // Мокаем репозитории
         when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(expectedUser));
-        when(accountRepository.findByAccountNumberAndAccountType("1234567890", AccountType.DEBIT))
-                .thenReturn(Optional.of(account));
+        when(cardRepository.findByCardNumberAndCardType("1234567890", CardType.DEBIT))
+                .thenReturn(Optional.of(card));
         when(userRepository.save(any(User.class))).thenReturn(expectedUser);
 
 
-        userService.setMainAccount("1234567890");
-        DebitAccount account2 = expectedUser.getMainAccount();
-        assertEquals(account2, account);
+        userService.setMainCard("1234567890");
+        DebitCard card2 = expectedUser.getMainCard();
+        assertEquals(card2, card);
     }
 
     @Test

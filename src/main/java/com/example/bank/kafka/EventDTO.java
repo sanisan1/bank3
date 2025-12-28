@@ -20,9 +20,9 @@ public class EventDTO {
     private OperationType type;          // WITHDRAW / DEPOSIT / TRANSFER
 
     @NotNull
-    private String accountNumber; // "4724118063"
+    private String cardNumber; // "4724118063"
 
-    private String accountTransferTo;
+    private String cardTransferTo;
 
     @NotNull
     private BigDecimal amount;    // 100

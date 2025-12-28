@@ -11,8 +11,8 @@ public class NotificationResponse {
 
     private NotflicationType type;
     private String title;
-    private String accountTransferTo;
-    private String accountNumber;
+    private String cardTransferTo;
+    private String cardNumber;
     private String comment;
     private String message;
     private Boolean read;

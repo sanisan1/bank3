@@ -3,7 +3,7 @@ package com.example.bank.controller;
 import com.example.bank.model.transaction.TransactionOperationRequest;
 import com.example.bank.model.transaction.TransactionResponse;
 
-import com.example.bank.model.account.AccountDto;
+import com.example.bank.model.card.CardDto;
 import com.example.bank.model.transaction.TransferRequest;
 import com.example.bank.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,37 +25,37 @@ public class TransactionController {
 
     // Операции
     @PostMapping("/deposit")
-    public AccountDto deposit(@RequestBody TransactionOperationRequest request) {
+    public CardDto deposit(@RequestBody TransactionOperationRequest request) {
         return transactionService.deposit(
-                request.getAccountNumber(),
+                request.getCardNumber(),
                 request.getAmount(),
                 request.getComment()
         );
     }
 
     @PostMapping("/withdraw")
-    public AccountDto withdraw(@RequestBody TransactionOperationRequest request) {
+    public CardDto withdraw(@RequestBody TransactionOperationRequest request) {
         return transactionService.withdraw(
-                request.getAccountNumber(),
+                request.getCardNumber(),
                 request.getAmount(),
                 request.getComment()
         );
     }
 
     @PostMapping("/transfer")
-    public AccountDto transfer(@RequestBody TransferRequest request) {
+    public CardDto transfer(@RequestBody TransferRequest request) {
         return transactionService.transfer(
-                request.getFromAccount(),
-                request.getToAccount(),
+                request.getFromCard(),
+                request.getToCard(),
                 request.getAmount(),
                 request.getComment()
         );
     }
 
     // Запросы данных
-    @GetMapping("/by-account/{accountNumber}")
-    public List<TransactionResponse> getTransactionsByAccount(@PathVariable String accountNumber) {
-        return transactionService.getTransactionsByAccount(accountNumber);
+    @GetMapping("/by-card/{cardNumber}")
+    public List<TransactionResponse> getTransactionsByCard(@PathVariable String cardNumber) {
+        return transactionService.getTransactionsByCard(cardNumber);
     }
 
     @GetMapping("/{id}")

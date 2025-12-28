@@ -73,12 +73,12 @@ src/
 - Блокировка пользователей
 
 ### 2. Типы банковских счетов
-#### Дебетовый счет (DebitAccount)
+#### Дебетовый счет (DebitCard)
 - Хранит средства клиента
 - Операции возможны только в пределах доступного баланса
 - Нельзя уйти в минус
 
-#### Кредитный счет (CreditAccount)
+#### Кредитный счет (CreditCard)
 - Расширенная функциональность по сравнению с дебетовым счетом
 - Баланс показывает общую сумму которую можно потратить с карты (работает как кредитка в обычном банке)
 - Поддержка процентных ставок и начисления процентов
@@ -117,10 +117,10 @@ src/
 - `POST /api/auth/login` - вход в систему
 
 ### Работа со счетами
-- `POST /api/accounts/create-debit` - создание дебетового счета
-- `POST /api/accounts/create-credit` - создание кредитного счета
-- `GET /api/accounts/{accountNumber}` - получение информации о счете
-- `PUT /api/accounts/block/{accountNumber}` - блокировка счета
+- `POST /api/cards/create-debit` - создание дебетового счета
+- `POST /api/cards/create-credit` - создание кредитного счета
+- `GET /api/cards/{cardNumber}` - получение информации о счете
+- `PUT /api/cards/block/{cardNumber}` - блокировка счета
 
 ### Финансовые операции
 - `POST /api/transactions/deposit` - пополнение счета
@@ -129,7 +129,7 @@ src/
 
 ### Транзакции
 - `GET /api/transactions/{id}` - получение конкретной транзакции
-- `GET /api/transactions/by-account/{accountNumber}` - получение транзакций по счету
+- `GET /api/transactions/by-card/{cardNumber}` - получение транзакций по счету
 - `GET /api/transactions/getAllForUser` - получение всех транзакций текущего пользователя
 - `GET /api/transactions/getAll` - (только для админов) получение всех транзакций системы
 
@@ -158,7 +158,7 @@ docker-compose up -d
 
 ## Тестирование
 Проект включает в себя как unit-тесты, так и интеграционные тесты:
-- Unit-тесты для сервисов (UserService, AccountService, TransactionService и др.)
+- Unit-тесты для сервисов (UserService, CardService, TransactionService и др.)
 - Интеграционные тесты для контроллеров и всего приложения
 - Используются H2 in-memory база данных для тестов
 

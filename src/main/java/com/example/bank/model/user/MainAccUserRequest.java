@@ -2,5 +2,5 @@ package com.example.bank.model.user;
 
 public class MainAccUserRequest {
     private String username;
-    private String mainAccountNumber;
+    private String mainCardNumber;
 }

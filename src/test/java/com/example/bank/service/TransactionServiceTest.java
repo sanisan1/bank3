@@ -4,13 +4,13 @@ import com.example.bank.Enums.OperationType;
 import com.example.bank.exception.InvalidOperationException;
 import com.example.bank.exception.ResourceNotFoundException;
 import com.example.bank.kafka.TransactionEventProducer;
-import com.example.bank.model.account.AccountDto;
-import com.example.bank.model.account.creditAccount.CreditAccount;
-import com.example.bank.model.account.debitAccount.DebitAccount;
+import com.example.bank.model.card.CardDto;
+import com.example.bank.model.card.creditCard.CreditCard;
+import com.example.bank.model.card.debitCard.DebitCard;
 import com.example.bank.model.transaction.Transaction;
 import com.example.bank.model.transaction.TransactionResponse;
 import com.example.bank.model.user.User;
-import com.example.bank.repository.AccountRepository;
+import com.example.bank.repository.CardRepository;
 import com.example.bank.repository.TransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,46 +29,46 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceTest {
 
-    @Mock private AccountRepository accountRepository;
+    @Mock private CardRepository cardRepository;
     @Mock private TransactionRepository transactionRepository;
-    @Mock private CreditAccountService creditAccountService;
-    @Mock private DebitAccountService debitAccountService;
+    @Mock private CreditCardService creditCardService;
+    @Mock private DebitCardService debitCardService;
     @Mock private TransactionEventProducer eventProducer;
 
     @InjectMocks
     private TransactionService transactionService;
 
-    private CreditAccount creditAccount;
-    private DebitAccount debitAccount;
+    private CreditCard creditCard;
+    private DebitCard debitCard;
 
     @BeforeEach
     void setUp() {
-        creditAccount = new CreditAccount();
-        creditAccount.setAccountNumber("CR123");
-        creditAccount.setBalance(BigDecimal.valueOf(1000));
+        creditCard = new CreditCard();
+        creditCard.setCardNumber("CR123");
+        creditCard.setBalance(BigDecimal.valueOf(1000));
 
-        debitAccount = new DebitAccount();
-        debitAccount.setAccountNumber("DB123");
-        debitAccount.setBalance(BigDecimal.valueOf(500));
+        debitCard = new DebitCard();
+        debitCard.setCardNumber("DB123");
+        debitCard.setBalance(BigDecimal.valueOf(500));
     }
 
     @Test
-    void deposit_ShouldWorkForCreditAccount() {
+    void deposit_ShouldWorkForCreditCard() {
         BigDecimal amount = BigDecimal.valueOf(100);
-        CreditAccount updated = new CreditAccount();
-        updated.setAccountNumber("CR123");
+        CreditCard updated = new CreditCard();
+        updated.setCardNumber("CR123");
         updated.setBalance(BigDecimal.valueOf(1100));
         // И user!
         User user = new User();
         user.setUserId(123L);
-        creditAccount.setUser(user);
-        updated.setUser(user); // и для updated, чтобы AccountMapper не упал
+        creditCard.setUser(user);
+        updated.setUser(user); // и для updated, чтобы CardMapper не упал
 
-        when(accountRepository.findByAccountNumber("CR123")).thenReturn(Optional.of(creditAccount));
-        when(creditAccountService.processDeposit(eq(creditAccount), eq(amount))).thenReturn(updated);
+        when(cardRepository.findByCardNumber("CR123")).thenReturn(Optional.of(creditCard));
+        when(creditCardService.processDeposit(eq(creditCard), eq(amount))).thenReturn(updated);
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        AccountDto result = transactionService.deposit("CR123", amount, "ok");
+        CardDto result = transactionService.deposit("CR123", amount, "ok");
         assertEquals(updated.getBalance(), result.getBalance());
         verify(transactionRepository).save(any(Transaction.class));
         verify(eventProducer).sendTransactionEvent(any());
@@ -78,8 +78,8 @@ class TransactionServiceTest {
     @Test
     void deposit_ShouldThrowForNegativeAmount_Credit() {
         BigDecimal negative = BigDecimal.valueOf(-100);
-        when(accountRepository.findByAccountNumber("CR123")).thenReturn(Optional.of(creditAccount));
-        when(creditAccountService.processDeposit(eq(creditAccount), eq(negative)))
+        when(cardRepository.findByCardNumber("CR123")).thenReturn(Optional.of(creditCard));
+        when(creditCardService.processDeposit(eq(creditCard), eq(negative)))
                 .thenThrow(new InvalidOperationException("Amount must be greater than zero"));
 
         InvalidOperationException ex = assertThrows(InvalidOperationException.class,
@@ -90,8 +90,8 @@ class TransactionServiceTest {
     }
 
     @Test
-    void deposit_ShouldThrowIfAccountNotFound() {
-        when(accountRepository.findByAccountNumber("XXX")).thenReturn(Optional.empty());
+    void deposit_ShouldThrowIfCardNotFound() {
+        when(cardRepository.findByCardNumber("XXX")).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> transactionService.deposit("XXX", BigDecimal.TEN, "no"));
@@ -100,22 +100,22 @@ class TransactionServiceTest {
     }
 
     @Test
-    void withdraw_ShouldWorkForDebitAccount() {
+    void withdraw_ShouldWorkForDebitCard() {
         BigDecimal amount = BigDecimal.valueOf(50);
-        DebitAccount updated = new DebitAccount();
-        updated.setAccountNumber("DB123");
+        DebitCard updated = new DebitCard();
+        updated.setCardNumber("DB123");
         updated.setBalance(BigDecimal.valueOf(450));
         User user = new User();
         user.setUserId(12L);
         updated.setUser(user);
         // ВАЖНО! Вот эта строка нужна:
-        debitAccount.setUser(user);
+        debitCard.setUser(user);
 
-        when(accountRepository.findByAccountNumber("DB123")).thenReturn(Optional.of(debitAccount));
-        when(debitAccountService.processWithdraw(eq(debitAccount), eq(amount))).thenReturn(updated);
+        when(cardRepository.findByCardNumber("DB123")).thenReturn(Optional.of(debitCard));
+        when(debitCardService.processWithdraw(eq(debitCard), eq(amount))).thenReturn(updated);
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        AccountDto result = transactionService.withdraw("DB123", amount, "ok");
+        CardDto result = transactionService.withdraw("DB123", amount, "ok");
         assertEquals(updated.getBalance(), result.getBalance());
         verify(transactionRepository).save(any(Transaction.class));
         verify(eventProducer).sendTransactionEvent(any());
@@ -125,8 +125,8 @@ class TransactionServiceTest {
     @Test
     void withdraw_ShouldThrowForNegativeAmount_Debit() {
         BigDecimal negative = BigDecimal.valueOf(-100);
-        when(accountRepository.findByAccountNumber("DB123")).thenReturn(Optional.of(debitAccount));
-        when(debitAccountService.processWithdraw(eq(debitAccount), eq(negative)))
+        when(cardRepository.findByCardNumber("DB123")).thenReturn(Optional.of(debitCard));
+        when(debitCardService.processWithdraw(eq(debitCard), eq(negative)))
                 .thenThrow(new InvalidOperationException("Amount must be greater than zero"));
 
         assertThrows(InvalidOperationException.class,
@@ -139,26 +139,26 @@ class TransactionServiceTest {
     void transfer_ShouldWork_FromDebitToCredit() {
         BigDecimal amount = BigDecimal.valueOf(100);
 
-        DebitAccount from = new DebitAccount();
-        from.setAccountNumber("DB12");
+        DebitCard from = new DebitCard();
+        from.setCardNumber("DB12");
         from.setBalance(BigDecimal.valueOf(600));
         User user = new User();
         user.setUserId(12L);
         from.setUser(user);
 
-        CreditAccount to = new CreditAccount();
-        to.setAccountNumber("CR1");
+        CreditCard to = new CreditCard();
+        to.setCardNumber("CR1");
         to.setBalance(BigDecimal.valueOf(200));
 
-        when(accountRepository.findByAccountNumber("DB12")).thenReturn(Optional.of(from));
-        when(accountRepository.findByAccountNumber("CR1")).thenReturn(Optional.of(to));
-        when(debitAccountService.processWithdraw(eq(from), eq(amount))).thenReturn(from);
-        when(creditAccountService.processDeposit(eq(to), eq(amount))).thenReturn(to);
+        when(cardRepository.findByCardNumber("DB12")).thenReturn(Optional.of(from));
+        when(cardRepository.findByCardNumber("CR1")).thenReturn(Optional.of(to));
+        when(debitCardService.processWithdraw(eq(from), eq(amount))).thenReturn(from);
+        when(creditCardService.processDeposit(eq(to), eq(amount))).thenReturn(to);
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        AccountDto result = transactionService.transfer("DB12", "CR1", amount, "ok");
+        CardDto result = transactionService.transfer("DB12", "CR1", amount, "ok");
 
-        assertEquals("DB12", result.getAccountNumber());
+        assertEquals("DB12", result.getCardNumber());
         verify(transactionRepository).save(any(Transaction.class));
         verify(eventProducer).sendTransactionEvent(any());
     }
@@ -166,12 +166,12 @@ class TransactionServiceTest {
     @Test
     void transfer_ShouldThrowForNegativeAmount() {
         BigDecimal negative = BigDecimal.valueOf(-100);
-        DebitAccount from = new DebitAccount(); from.setAccountNumber("DB1");
-        CreditAccount to = new CreditAccount(); to.setAccountNumber("CR1");
+        DebitCard from = new DebitCard(); from.setCardNumber("DB1");
+        CreditCard to = new CreditCard(); to.setCardNumber("CR1");
 
-        when(accountRepository.findByAccountNumber("DB1")).thenReturn(Optional.of(from));
-        when(accountRepository.findByAccountNumber("CR1")).thenReturn(Optional.of(to));
-        when(debitAccountService.processWithdraw(eq(from), eq(negative)))
+        when(cardRepository.findByCardNumber("DB1")).thenReturn(Optional.of(from));
+        when(cardRepository.findByCardNumber("CR1")).thenReturn(Optional.of(to));
+        when(debitCardService.processWithdraw(eq(from), eq(negative)))
                 .thenThrow(new InvalidOperationException("Amount must be greater than zero"));
 
         assertThrows(InvalidOperationException.class,
@@ -209,14 +209,14 @@ class TransactionServiceTest {
     }
 
     @Test
-    void getTransactionsByAccount_ShouldReturnFilteredList() {
+    void getTransactionsByCard_ShouldReturnFilteredList() {
         Transaction t = new Transaction();
-        t.setFromAccount("DB123");
+        t.setFromCard("DB123");
         t.setAmount(BigDecimal.TEN);
-        when(transactionRepository.findByFromAccountOrToAccount("DB123", "DB123"))
+        when(transactionRepository.findByFromCardOrToCard("DB123", "DB123"))
                 .thenReturn(List.of(t));
 
-        List<TransactionResponse> result = transactionService.getTransactionsByAccount("DB123");
+        List<TransactionResponse> result = transactionService.getTransactionsByCard("DB123");
         assertEquals(1, result.size());
     }
 
@@ -226,10 +226,10 @@ class TransactionServiceTest {
     }
 
     @Test
-    void getTransactionsByUser_ShouldReturnEmptyIfNoAccounts() {
-        when(accountRepository.findByUserUserId(2L)).thenReturn(List.of());
+    void getTransactionsByUser_ShouldReturnEmptyIfNoCards() {
+        when(cardRepository.findByUserUserId(2L)).thenReturn(List.of());
         List<TransactionResponse> result = transactionService.getTransactionsByUser(2L);
         assertTrue(result.isEmpty());
-        verify(transactionRepository, never()).findByFromAccountInOrToAccountIn(anyList(), anyList());
+        verify(transactionRepository, never()).findByFromCardInOrToCardIn(anyList(), anyList());
     }
 }

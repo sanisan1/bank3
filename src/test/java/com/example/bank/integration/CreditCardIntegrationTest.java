@@ -1,6 +1,6 @@
 package com.example.bank.integration;
 
-import com.example.bank.model.account.creditAccount.CreditAccountCreateRequest;
+import com.example.bank.model.card.creditCard.CreditCardCreateRequest;
 import com.example.bank.model.user.CreateUserDto;
 import com.example.bank.model.user.User;
 import com.example.bank.repository.UserRepository;
@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "bank.credit.default.minimum-payment-rate=5.0",
         "bank.credit.default.grace-period=30"
 })
-public class CreditAccountIntegrationTest {
+public class CreditCardIntegrationTest {
 
 
     @Autowired
@@ -45,7 +45,7 @@ public class CreditAccountIntegrationTest {
     private Long userId;
     private String adminToken;
     private String userToken;
-    private String creditAccountNumber;
+    private String creditCardNumber;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -92,13 +92,13 @@ public class CreditAccountIntegrationTest {
 
 
         // Создаем кредитный аккаунт через администратора
-        CreditAccountCreateRequest request = new CreditAccountCreateRequest();
+        CreditCardCreateRequest request = new CreditCardCreateRequest();
         request.setUserId(userId);
         request.setCreditLimit(new BigDecimal("5000.00"));
         request.setInterestRate(new BigDecimal("0.15"));
         request.setGracePeriod(30);
 
-        String accountResponse = mockMvc.perform(post("/api/credit-accounts/createforadmin")
+        String cardResponse = mockMvc.perform(post("/api/credit-cards/createforadmin")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -108,12 +108,12 @@ public class CreditAccountIntegrationTest {
                 .getContentAsString();
 
         // Извлекаем номер счета из ответа
-        JsonNode accountJson = objectMapper.readTree(accountResponse);
-        creditAccountNumber = accountJson.get("accountNumber").asText();
+        JsonNode cardJson = objectMapper.readTree(cardResponse);
+        creditCardNumber = cardJson.get("cardNumber").asText();
     }
 
     @Test
-    public void createCreditAccount_asUser_createsAccountWithDefaultValues() throws Exception {
+    public void createCreditCard_asUser_createsCardWithDefaultValues() throws Exception {
         // Создаем нового пользователя без кредитного аккаунта
         CreateUserDto newUserDto = new CreateUserDto();
         newUserDto.setUsername("newuser");
@@ -139,11 +139,11 @@ public class CreditAccountIntegrationTest {
                 .getContentAsString();
 
         // Новый пользователь создает себе кредитный аккаунт
-        mockMvc.perform(post("/api/credit-accounts/create")
+        mockMvc.perform(post("/api/credit-cards/create")
                         .header("Authorization", "Bearer " + newUserToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.accountNumber").exists())
+                .andExpect(jsonPath("$.cardNumber").exists())
                 .andExpect(jsonPath("$.creditLimit").value(10000.00))
                 .andExpect(jsonPath("$.interestRate").value(15.0))
                 .andExpect(jsonPath("$.gracePeriod").value(30));
@@ -154,7 +154,7 @@ public class CreditAccountIntegrationTest {
 
     //Пользователь не может создать второй аккаунт
     @Test
-    public void createCreditAccount_asUser_returnsForbidden() throws Exception {
+    public void createCreditCard_asUser_returnsForbidden() throws Exception {
 
         userToken = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -168,7 +168,7 @@ public class CreditAccountIntegrationTest {
 
 
         // Попытка создания кредитного аккаунта обычным пользователем
-        mockMvc.perform(post("/api/credit-accounts/create")
+        mockMvc.perform(post("/api/credit-cards/create")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
@@ -177,7 +177,7 @@ public class CreditAccountIntegrationTest {
     @Test
     public void increaseCreditLimit_asAdmin_increasesLimit() throws Exception {
         // Увеличиваем кредитный лимит
-        mockMvc.perform(put("/api/credit-accounts/{accountNumber}/increase-limit", creditAccountNumber)
+        mockMvc.perform(put("/api/credit-cards/{cardNumber}/increase-limit", creditCardNumber)
                         .header("Authorization", "Bearer " + adminToken)
                         .param("newLimit", "6000.00")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -188,7 +188,7 @@ public class CreditAccountIntegrationTest {
     @Test
     public void increaseCreditLimit_asUser_returnsForbidden() throws Exception {
         // Пытаемся увеличить кредитный лимит как обычный пользователь
-        mockMvc.perform(put("/api/credit-accounts/{accountNumber}/increase-limit", creditAccountNumber)
+        mockMvc.perform(put("/api/credit-cards/{cardNumber}/increase-limit", creditCardNumber)
                         .header("Authorization", "Bearer " + userToken)
                         .param("newLimit", "6000.00")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -197,7 +197,7 @@ public class CreditAccountIntegrationTest {
 
     @Test
     public void accrueInterest_succeeds() throws Exception {
-        mockMvc.perform(post("/api/credit-accounts/accrue-interest")
+        mockMvc.perform(post("/api/credit-cards/accrue-interest")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
