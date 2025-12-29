@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,6 +82,8 @@ public class UserServiceTest {
         card.setId(1L);
         card.setCardNumber("1234567890");
         card.setUser(expectedUser);
+        card.setExpiryDate(LocalDate.now().plusYears(1));
+        card.setStatus(com.example.bank.Enums.CardStatus.ACTIVE);
     }
 
     @Test
@@ -118,7 +121,7 @@ public class UserServiceTest {
         // Act
         User actualUser = userService.createUser(createUserDto);
 
-        // Assert - проверяем, что blocked установлен в false
+        // Assert - проверяем, что status установлен в false
         assertFalse(actualUser.getBlocked());
         verify(userRepository, times(1)).save(any(User.class));
     }

@@ -1,5 +1,6 @@
 package com.example.bank.service;
 
+import com.example.bank.Enums.CardStatus;
 import com.example.bank.exception.CardBlockedException;
 import com.example.bank.exception.InvalidOperationException;
 import com.example.bank.exception.ResourceNotFoundException;
@@ -18,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.util.List;
 
 // Абстрактный сервис для управления банковскими счетами
@@ -66,10 +68,18 @@ public abstract class AbstractCardService {
             log.error("Card argument is null!");
             throw new IllegalArgumentException("Счет не может быть null");
         }
-        if (Boolean.TRUE.equals(card.getBlocked())) {
-            log.error("Operation attempt on blocked card {}", card.getCardNumber());
+        if (card.getStatus() == CardStatus.BLOCKED) {
+            log.error("Operation attempt on status card {}", card.getCardNumber());
             throw new CardBlockedException(card);
         }
+        if (card.getStatus() == CardStatus.CLOSED) {
+            log.error("Operation attempt on status card {}", card.getCardNumber());
+            throw new CardBlockedException(card);
+        }
+        if (LocalDate.now().isAfter(card.getExpiryDate())) {
+            log.error("Operation attempt on status card {}", card.getCardNumber());
+            throw new CardBlockedException(card);
+        }//////////////////////
     }
 
     // Генерирует уникальный 10-значный номер счета
@@ -164,11 +174,11 @@ public abstract class AbstractCardService {
     // Блокирует счет (только для администратора)
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public Card blockCard(String cardNumber) {
-        log.info("Admin blocking card: {}", cardNumber);
+    public Card blockCard(Long id) {
+        log.info("Admin blocking card: {}", id);
         try {
-            Card card = getCardByNumber(cardNumber);
-            card.setBlocked(true);
+            Card card = getCardById(id);
+            card.setStatus(CardStatus.BLOCKED);
             return cardRepository.save(card);
         } catch (Exception e) {
             log.error("Error while blocking card: {}", e.getMessage(), e);
@@ -183,7 +193,7 @@ public abstract class AbstractCardService {
         log.info("Admin unblocking card: {}", cardNumber);
         try {
             Card card = getCardByNumber(cardNumber);
-            card.setBlocked(false);
+            card.setStatus(CardStatus.ACTIVE);
             return cardRepository.save(card);
         } catch (Exception e) {
             log.error("Error while unblocking card: {}", e.getMessage(), e);

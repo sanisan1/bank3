@@ -51,7 +51,7 @@ public class UserService {
         try {
             User savedUser = userRepository.save(user);
 
-            log.info("User created successfully: userId={}, username={}, blocked={}",
+            log.info("User created successfully: userId={}, username={}, status={}",
                     savedUser.getUserId(), savedUser.getUsername(), savedUser.getBlocked());
 
             return savedUser;

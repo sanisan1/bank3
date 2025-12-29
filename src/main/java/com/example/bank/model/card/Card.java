@@ -1,6 +1,7 @@
 package com.example.bank.model.card;
 
 
+import com.example.bank.Enums.CardStatus;
 import com.example.bank.Enums.CardType;
 import com.example.bank.model.user.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -10,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -32,8 +34,12 @@ public abstract class Card {
     @NotNull
     private User user;
 
+    @Column(nullable = false)
+    private LocalDate expiryDate;
+
     private BigDecimal balance = BigDecimal.ZERO;
-    protected Boolean blocked = false;
+    @Enumerated(EnumType.STRING)
+    private CardStatus status = CardStatus.ACTIVE;
 
 
     @Enumerated(EnumType.STRING)

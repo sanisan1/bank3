@@ -50,7 +50,7 @@ public class UserController {
                 case "firstName" -> user.setFirstName((String) value);
                 case "lastName" -> user.setLastName((String) value);
                 case "phoneNumber" -> user.setPhoneNumber((String) value);
-                case "blocked" -> user.setBlocked((Boolean) value);
+                case "status" -> user.setBlocked((Boolean) value);
             }
         });
 

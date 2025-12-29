@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 @Service
 public class DebitCardService extends AbstractCardService {
 
@@ -31,6 +33,8 @@ public class DebitCardService extends AbstractCardService {
             DebitCard card = new DebitCard();
             card.setUser(user);
             card.setCardNumber(generateUniqueCardNumber());
+            card.setExpiryDate(LocalDate.now().plusYears(5)); // Устанавливаем дату окончания действия на 5 лет
+
             DebitCard saved = cardRepository.save(card);
 
             if (user.getMainCard() == null) {

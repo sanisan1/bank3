@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,10 +47,14 @@ class TransactionServiceTest {
         creditCard = new CreditCard();
         creditCard.setCardNumber("CR123");
         creditCard.setBalance(BigDecimal.valueOf(1000));
+        creditCard.setExpiryDate(LocalDate.now().plusYears(1));
+        creditCard.setStatus(com.example.bank.Enums.CardStatus.ACTIVE);
 
         debitCard = new DebitCard();
         debitCard.setCardNumber("DB123");
         debitCard.setBalance(BigDecimal.valueOf(500));
+        debitCard.setExpiryDate(LocalDate.now().plusYears(1));
+        debitCard.setStatus(com.example.bank.Enums.CardStatus.ACTIVE);
     }
 
     @Test

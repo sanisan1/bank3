@@ -10,6 +10,7 @@ import org.mockito.*;
 import org.springframework.data.domain.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,6 +44,8 @@ class CreditCardServiceTest {
         card.setDebt(BigDecimal.ZERO);
         card.setAccruedInterest(BigDecimal.ZERO);
         card.setInterestRate(BigDecimal.valueOf(12)); // 12% годовых
+        card.setExpiryDate(LocalDate.now().plusYears(1));
+        card.setStatus(com.example.bank.Enums.CardStatus.ACTIVE);
     }
 
 

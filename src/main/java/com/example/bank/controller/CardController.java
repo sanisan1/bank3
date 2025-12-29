@@ -21,7 +21,7 @@ public class CardController {
     }
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{cardNumber}/block")
-    public ResponseEntity blockCard(@PathVariable String cardNumber) {
+    public ResponseEntity blockCard(@PathVariable Long id) {
         Card card = cardService.blockCard(cardNumber);
         return ResponseEntity.ok(card);
     }

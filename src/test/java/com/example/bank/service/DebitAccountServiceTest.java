@@ -1,5 +1,6 @@
 package com.example.bank.service;
 
+import com.example.bank.Enums.CardStatus;
 import com.example.bank.exception.CardBlockedException;
 import com.example.bank.exception.InvalidOperationException;
 import com.example.bank.model.card.debitCard.DebitCard;
@@ -19,6 +20,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,6 +55,8 @@ class DebitCardServiceTest {
         card = new DebitCard();
         card.setCardNumber("1234567890");
         card.setBalance(new BigDecimal(1000));
+        card.setExpiryDate(LocalDate.now().plusYears(1));
+        card.setStatus(CardStatus.ACTIVE);
     }
 
     @Test
@@ -121,7 +125,7 @@ class DebitCardServiceTest {
 
     @Test
     void testWithdraw_shouldThrowExceptionWhenCardIsBlocked() {
-        card.setBlocked(true);
+        card.setStatus(CardStatus.BLOCKED);
         assertThrows(CardBlockedException.class, () -> debitCardService.processWithdraw(card, new BigDecimal(100)));
     }
 

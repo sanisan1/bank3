@@ -24,6 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 // Сервис для работы с кредитными счетами
 @Service
@@ -104,6 +105,8 @@ public class CreditCardService extends AbstractCardService {
             acc.setUser(user);
             acc.setCardNumber(generateUniqueCardNumber());
             acc.setCreditLimit(creditLimit);
+            acc.setExpiryDate(LocalDate.now().plusYears(5)); // Устанавливаем дату окончания действия на 5 лет
+
             acc.setBalance(acc.getCreditLimit());
             acc.setInterestRate(interestRate);
             acc.setMinimumPaymentRate(BigDecimal.valueOf(5)); // Значение по умолчанию
@@ -135,6 +138,7 @@ public class CreditCardService extends AbstractCardService {
             acc.setUser(user);
             acc.setCardNumber(generateUniqueCardNumber());
             acc.setCreditLimit(defaultCreditLimit);
+            acc.setExpiryDate(LocalDate.now().plusYears(5));
             acc.setBalance(acc.getCreditLimit());
             acc.setInterestRate(defaultInterestRate);
             acc.setMinimumPaymentRate(defaultMinimumPaymentRate);
