@@ -10,9 +10,9 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class TransferRequest {
     @NotBlank
-    String fromCard;
+    Long fromId;
     @NotBlank
-    String toCard;
+    Long toId;
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     BigDecimal amount;
     String comment;

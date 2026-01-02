@@ -2,6 +2,7 @@ package com.example.bank.mapper;
 
 import com.example.bank.model.card.creditCard.CreditCard;
 import com.example.bank.model.card.creditCard.CreditCardResponseDto;
+import com.example.bank.service.CardServiceImpl;
 
 public class CreditCardMapper {
 
@@ -12,14 +13,15 @@ public class CreditCardMapper {
         }
 
         return new CreditCardResponseDto(
-                creditCard.getCardNumber(),
-                creditCard.getBalance(),
-                creditCard.getCreditLimit(),
-                creditCard.getInterestRate(),
-                creditCard.getMinimumPaymentRate(),
-                creditCard.getGracePeriod(),
-                creditCard.getDebt(), // долг
-                creditCard.getPaymentDueDate()
-        );
+                creditCard.getId(),
+                CardServiceImpl.maskCardNumber(creditCard.getCardNumber()),
+                        creditCard.getBalance(),
+                        creditCard.getCreditLimit(),
+                        creditCard.getInterestRate(),
+                        creditCard.getMinimumPaymentRate(),
+                        creditCard.getGracePeriod(),
+                        creditCard.getDebt(), // долг
+                        creditCard.getPaymentDueDate()
+                );
     }
 }

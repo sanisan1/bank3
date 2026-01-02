@@ -27,7 +27,7 @@ public class TransactionController {
     @PostMapping("/deposit")
     public CardDto deposit(@RequestBody TransactionOperationRequest request) {
         return transactionService.deposit(
-                request.getCardNumber(),
+                request.getId(),
                 request.getAmount(),
                 request.getComment()
         );
@@ -36,7 +36,7 @@ public class TransactionController {
     @PostMapping("/withdraw")
     public CardDto withdraw(@RequestBody TransactionOperationRequest request) {
         return transactionService.withdraw(
-                request.getCardNumber(),
+                request.getId(),
                 request.getAmount(),
                 request.getComment()
         );
@@ -45,8 +45,8 @@ public class TransactionController {
     @PostMapping("/transfer")
     public CardDto transfer(@RequestBody TransferRequest request) {
         return transactionService.transfer(
-                request.getFromCard(),
-                request.getToCard(),
+                request.getFromId(),
+                request.getToId(),
                 request.getAmount(),
                 request.getComment()
         );
@@ -63,13 +63,13 @@ public class TransactionController {
         return transactionService.getTransactionById(id);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+
     @GetMapping("/getAll")
     public List<TransactionResponse> getAllTransactions() {
         return transactionService.getAllTransactions();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+
     @GetMapping("/by-user/{userId}")
     public List<TransactionResponse> getTransactionsByUser(@PathVariable Long userId) {
         return transactionService.getTransactionsByUser(userId);

@@ -8,6 +8,7 @@ import com.example.bank.model.Notification;
 import com.example.bank.model.NotificationResponse;
 import com.example.bank.model.transaction.Transaction;
 import com.example.bank.repository.CardRepository;
+import com.example.bank.service.CardServiceImpl;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -44,7 +45,7 @@ public class NotificationMapper {
             eventDTO.setCardNumber(transaction.getFromCard());
         }
 
-        eventDTO.setCardTransferTo(transaction.getToCard());
+        eventDTO.setCardTransferTo(CardServiceImpl.maskCardNumber(transaction.getToCard()));
         eventDTO.setAmount(transaction.getAmount());
         eventDTO.setUserId(transaction.getUser().getUserId());
         eventDTO.setComment(transaction.getComment());

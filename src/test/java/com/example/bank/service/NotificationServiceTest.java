@@ -67,7 +67,7 @@ class NotificationServiceTest {
         verify(notificationRepository, times(1)).findByUserIdAndReadFalse(1L);
         verify(userService, times(1)).getCurrentUser();
 
-
+        // Проверка, что уведомления помечаются как прочитанные после получения
         assertTrue(notifications.get(0).getRead());
         assertTrue(notifications.get(1).getRead());
     }
@@ -84,7 +84,7 @@ class NotificationServiceTest {
         verify(notificationRepository, times(1)).findByUserId(1L);
         verify(userService, times(1)).getCurrentUser();
 
-
+        // Проверка, что все уведомления помечаются как прочитанные
         assertTrue(notifications.get(0).getRead());
         assertTrue(notifications.get(1).getRead());
     }

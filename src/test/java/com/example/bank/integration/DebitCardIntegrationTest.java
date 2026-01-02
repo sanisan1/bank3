@@ -36,6 +36,7 @@ public class DebitCardIntegrationTest {
     private String adminToken;
     private String userToken;
     private String debitCardNumber;
+    private Long debitCardId;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -80,24 +81,45 @@ public class DebitCardIntegrationTest {
         userId = user.getUserId();
 
 
-        // Создаем дебетовый аккаунт
-        String cardResponse = mockMvc.perform(post("/api/debit-cards")
-                        .header("Authorization", "Bearer " + userToken)
+        // Создаем дебетовый аккаунт через администратора
+        String cardResponse = mockMvc.perform(post("/api/debit-cards/" + userId)
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        // Извлекаем номер счета из ответа
+        // Извлекаем номер счета и ID из ответа
         JsonNode cardJson = objectMapper.readTree(cardResponse);
         debitCardNumber = cardJson.get("cardNumber").asText();
+        // Проверяем, есть ли ID в ответе, и если нет, то получаем через отдельный запрос
+        JsonNode idNode = cardJson.get("id");
+        if (idNode != null) {
+            debitCardId = idNode.asLong();
+        } else {
+            // Если ID не возвращается в ответе на создание, получаем через отдельный запрос
+            String getAllCardsResponse = mockMvc.perform(get("/api/cards/getCards")
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            
+            JsonNode getAllCardsJson = objectMapper.readTree(getAllCardsResponse);
+            for (JsonNode cardNode : getAllCardsJson) {
+                if (debitCardNumber.equals(cardNode.get("cardNumber").asText())) {
+                    debitCardId = cardNode.get("id").asLong();
+                    break;
+                }
+            }
+        }
     }
 
     @Test
-    public void CreateDebitCard_asUser_createsCard() throws Exception {
-        mockMvc.perform(post("/api/debit-cards")
-                        .header("Authorization", "Bearer " + userToken)
+    public void CreateDebitCard_asAdmin_createsCard() throws Exception {
+        mockMvc.perform(post("/api/debit-cards/" + userId)
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.cardNumber").exists())
@@ -106,9 +128,9 @@ public class DebitCardIntegrationTest {
 
 
     @Test
-    public void deleteDebitCard_asUser_deletesCard() throws Exception {
-        mockMvc.perform(delete("/api/debit-cards/{cardNumber}", debitCardNumber)
-                        .header("Authorization", "Bearer " + userToken)
+    public void deleteDebitCard_asAdmin_deletesCard() throws Exception {
+        mockMvc.perform(delete("/api/debit-cards/{id}", debitCardId)
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
     }

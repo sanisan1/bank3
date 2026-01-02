@@ -46,6 +46,7 @@ public class CreditCardIntegrationTest {
     private String adminToken;
     private String userToken;
     private String creditCardNumber;
+    private Long creditCardId;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -107,9 +108,30 @@ public class CreditCardIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        // Извлекаем номер счета из ответа
+        // Извлекаем номер счета и ID из ответа
         JsonNode cardJson = objectMapper.readTree(cardResponse);
         creditCardNumber = cardJson.get("cardNumber").asText();
+        // Проверяем, есть ли ID в ответе, и если нет, то получаем через отдельный запрос
+        JsonNode idNode = cardJson.get("id");
+        if (idNode != null) {
+            creditCardId = idNode.asLong();
+        } else {
+            // Если ID не возвращается в ответе на создание, получаем через отдельный запрос
+            String getAllCardsResponse = mockMvc.perform(get("/api/cards/getCards")
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+            
+            JsonNode getAllCardsJson = objectMapper.readTree(getAllCardsResponse);
+            for (JsonNode cardNode : getAllCardsJson) {
+                if (creditCardNumber.equals(cardNode.get("cardNumber").asText())) {
+                    creditCardId = cardNode.get("id").asLong();
+                    break;
+                }
+            }
+        }
     }
 
     @Test
@@ -177,7 +199,7 @@ public class CreditCardIntegrationTest {
     @Test
     public void increaseCreditLimit_asAdmin_increasesLimit() throws Exception {
         // Увеличиваем кредитный лимит
-        mockMvc.perform(put("/api/credit-cards/{cardNumber}/increase-limit", creditCardNumber)
+        mockMvc.perform(put("/api/credit-cards/{id}/increase-limit", creditCardId)
                         .header("Authorization", "Bearer " + adminToken)
                         .param("newLimit", "6000.00")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -188,7 +210,7 @@ public class CreditCardIntegrationTest {
     @Test
     public void increaseCreditLimit_asUser_returnsForbidden() throws Exception {
         // Пытаемся увеличить кредитный лимит как обычный пользователь
-        mockMvc.perform(put("/api/credit-cards/{cardNumber}/increase-limit", creditCardNumber)
+        mockMvc.perform(put("/api/credit-cards/{id}/increase-limit", creditCardId)
                         .header("Authorization", "Bearer " + userToken)
                         .param("newLimit", "6000.00")
                         .contentType(MediaType.APPLICATION_JSON))

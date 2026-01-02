@@ -2,6 +2,7 @@ package com.example.bank.controller;
 
 import com.example.bank.model.user.LoginRequest;
 import com.example.bank.security.JwtUtil;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,7 @@ public class AuthController {
         this.authManager = authManager;
     }
 
+    @SecurityRequirements
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest loginRequest) {
         String username = loginRequest.getUsername();

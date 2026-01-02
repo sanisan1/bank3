@@ -24,7 +24,7 @@ public class CreditCardController {
         this.creditCardService = creditCardService;
     }
 
-    /* ----------------------- Создание аккаунта (только для админа) ----------------------- */
+
     @PostMapping("/createforadmin")
     public ResponseEntity<CreditCardResponseDto> createCard(
             @Valid @RequestBody CreditCardCreateRequest request
@@ -47,49 +47,46 @@ public class CreditCardController {
     }
 
 
-    /* ----------------------- Операции с аккаунтом ----------------------- */
 
 
 
-    @DeleteMapping("/{cardNumber}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteCard(@PathVariable String cardNumber) {
-        creditCardService.deleteByCardNumber(cardNumber);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCard(@PathVariable Long id) {
+        creditCardService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
-    /* ----------------------- Админские методы ----------------------- */
 
 
 
 
-    @PutMapping("/{cardNumber}/increase-limit")
-    @PreAuthorize("hasRole('ADMIN')")
+
+    @PutMapping("/{id}/increase-limit")
     public ResponseEntity<CreditCard> increaseCreditLimit(
-            @PathVariable String cardNumber,
+            @PathVariable Long id,
             @RequestParam @NotNull @DecimalMin("0.01") BigDecimal newLimit
     ) {
-        CreditCard card = creditCardService.increaseCreditLimit(cardNumber, newLimit);
+        CreditCard card = creditCardService.increaseCreditLimit(id, newLimit);
         return ResponseEntity.ok(card);
     }
 
 
-    @PutMapping("/{cardNumber}/decrease-limit")
+    @PutMapping("/{id}/decrease-limit")
     public ResponseEntity<CreditCard> decreaseCreditLimit(
-            @PathVariable String cardNumber,
+            @PathVariable Long id,
             @RequestParam @NotNull @DecimalMin("0.01") BigDecimal newLimit
     ) {
-        CreditCard card = creditCardService.decreaseCreditLimit(cardNumber, newLimit);
+        CreditCard card = creditCardService.decreaseCreditLimit(id, newLimit);
         return ResponseEntity.ok(card);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{cardNumber}/set-interest")
+
+    @PutMapping("/{id}/set-interest")
     public ResponseEntity<CreditCard> setInterestRate(
-            @PathVariable String cardNumber,
+            @PathVariable Long id,
             @RequestParam @NotNull @DecimalMin("0.0") BigDecimal newRate
     ) {
-        CreditCard card = creditCardService.setInterestRate(cardNumber, newRate);
+        CreditCard card = creditCardService.setInterestRate(id, newRate);
         return ResponseEntity.ok(card);
     }
 

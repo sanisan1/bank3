@@ -8,6 +8,7 @@ import com.example.bank.model.card.debitCard.DebitCard;
 import com.example.bank.Enums.CardType;
 import com.example.bank.model.user.CreateUserDto;
 import com.example.bank.model.user.User;
+import com.example.bank.model.user.UserDto;
 import com.example.bank.repository.CardRepository;
 import com.example.bank.repository.UserRepository;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public class UserService {
     }
 
     // Создание нового пользователя
-    public User createUser(CreateUserDto createUserDto) {
+    public UserDto createUser(CreateUserDto createUserDto) {
         log.info("Creating new user: username={}", createUserDto.getUsername());
 
         if (createUserDto.getBlocked() == null) {
@@ -51,10 +52,13 @@ public class UserService {
         try {
             User savedUser = userRepository.save(user);
 
+            UserDto userDto = UserMapper.toDto(savedUser);
+
+
             log.info("User created successfully: userId={}, username={}, status={}",
                     savedUser.getUserId(), savedUser.getUsername(), savedUser.getBlocked());
 
-            return savedUser;
+            return userDto;
         } catch (DataIntegrityViolationException e) {
             log.warn("Failed to create user due to constraint violation: username={}", createUserDto.getUsername());
             throw new DataIntegrityViolationException("User with this username already exists", e);

@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class CardDto {
 
+    private Long id;
     private String cardNumber;
     private BigDecimal balance;
     private CardType cardType;

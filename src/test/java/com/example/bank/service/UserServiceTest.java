@@ -6,6 +6,7 @@ import com.example.bank.model.card.debitCard.DebitCard;
 import com.example.bank.Enums.CardType;
 import com.example.bank.model.user.CreateUserDto;
 import com.example.bank.model.user.User;
+import com.example.bank.model.user.UserDto;
 import com.example.bank.repository.CardRepository;
 import com.example.bank.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,7 @@ public class UserServiceTest {
     private UserService userService;
 
     private User expectedUser;
+    private UserDto expectedUserDto;
     private CreateUserDto createUserDto;
 
     @BeforeEach
@@ -77,6 +79,16 @@ public class UserServiceTest {
         expectedUser.setBlocked(false);
         expectedUser.setRole(Role.USER);
 
+        // Подготовка ожидаемого UserDto
+        expectedUserDto = new UserDto();
+        expectedUserDto.setUserId(1L);
+        expectedUserDto.setFirstName("John");
+        expectedUserDto.setLastName("Doe");
+        expectedUserDto.setEmail("john.doe@example.com");
+        expectedUserDto.setUsername("johndoe");
+        expectedUserDto.setBlocked(false);
+        expectedUserDto.setRole(Role.USER);
+
 
         card = new DebitCard();
         card.setId(1L);
@@ -88,25 +100,21 @@ public class UserServiceTest {
 
     @Test
     void testCreateUser() {
-        // Arrange - настройка поведения моков
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(expectedUser);
 
-        // Act - вызов тестируемого метода
-        User actualUser = userService.createUser(createUserDto);
+        UserDto actualUserDto = userService.createUser(createUserDto);
 
-        // Assert - проверка результатов
-        assertNotNull(actualUser);
-        assertEquals(expectedUser.getUserId(), actualUser.getUserId());
-        assertEquals(expectedUser.getFirstName(), actualUser.getFirstName());
-        assertEquals(expectedUser.getLastName(), actualUser.getLastName());
-        assertEquals(expectedUser.getEmail(), actualUser.getEmail());
-        assertEquals(expectedUser.getUsername(), actualUser.getUsername());
-        assertEquals("encodedPassword", actualUser.getPassword());
-        assertEquals(false, actualUser.getBlocked());
-        assertEquals(Role.USER, actualUser.getRole());
+        // Проверка, что ID пользователя корректно возвращается
+        assertNotNull(actualUserDto);
+        assertEquals(expectedUserDto.getUserId(), actualUserDto.getUserId());
+        assertEquals(expectedUserDto.getFirstName(), actualUserDto.getFirstName());
+        assertEquals(expectedUserDto.getLastName(), actualUserDto.getLastName());
+        assertEquals(expectedUserDto.getEmail(), actualUserDto.getEmail());
+        assertEquals(expectedUserDto.getUsername(), actualUserDto.getUsername());
+        assertEquals(false, actualUserDto.getBlocked());
+        assertEquals(Role.USER, actualUserDto.getRole());
 
-        // Verify - проверка вызовов методов моков
         verify(passwordEncoder, times(1)).encode("password");
         verify(userRepository, times(1)).save(any(User.class));
     }
@@ -119,10 +127,10 @@ public class UserServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(expectedUser);
 
         // Act
-        User actualUser = userService.createUser(createUserDto);
+        UserDto actualUserDto = userService.createUser(createUserDto);
 
         // Assert - проверяем, что status установлен в false
-        assertFalse(actualUser.getBlocked());
+        assertFalse(actualUserDto.getBlocked());
         verify(userRepository, times(1)).save(any(User.class));
     }
 
@@ -148,7 +156,6 @@ public class UserServiceTest {
 
     @Test
     void setMainCardTest() {
-        // Мокаем SecurityContext и Authentication
         Authentication authentication = mock(Authentication.class);
         SecurityContext securityContext = mock(SecurityContext.class);
 
@@ -159,7 +166,6 @@ public class UserServiceTest {
 
         SecurityContextHolder.setContext(securityContext);
 
-        // Мокаем репозитории
         when(userRepository.findByUsername("johndoe")).thenReturn(Optional.of(expectedUser));
         when(cardRepository.findByCardNumberAndCardType("1234567890", CardType.DEBIT))
                 .thenReturn(Optional.of(card));
@@ -168,6 +174,7 @@ public class UserServiceTest {
 
         userService.setMainCard("1234567890");
         DebitCard card2 = expectedUser.getMainCard();
+        // Проверка, что основная карта корректно устанавливается для пользователя
         assertEquals(card2, card);
     }
 
@@ -177,6 +184,7 @@ public class UserServiceTest {
 
         userService.deleteUserById(1L);
 
+        // Проверка, что метод удаления был вызван
         verify(userRepository).deleteById(1L);
     }
 
@@ -188,6 +196,7 @@ public class UserServiceTest {
             userService.deleteUserById(99L);
         });
 
+        // Проверка, что удаление не происходит при отсутствии пользователя
         verify(userRepository, never()).deleteById(anyLong());
     }
 

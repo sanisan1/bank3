@@ -29,7 +29,6 @@ public class AuthenticationIntegrationTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        // Создаем тестового пользователя через REST API регистрации
         CreateUserDto testUser = new CreateUserDto();
         testUser.setUsername("testuser2");
         testUser.setPassword("password123");
@@ -46,50 +45,42 @@ public class AuthenticationIntegrationTest {
 
     @Test
     public void loginUser_withValidCredentials_returnsJwtToken() throws Exception {
-        // Подготавливаем данные для входа
         LoginRequest loginRequest = new LoginRequest("testuser2", "password123");
 
-        // Выполняем запрос на авторизацию
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
-                .andExpect(content().string(matchesPattern("^[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+$"))); // JWT токен
+                .andExpect(content().string(matchesPattern("^[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+$"))); // JWT token
     }
 
     @Test
     public void loginUser_withInvalidPassword_returnsError() throws Exception {
-        // Подготавливаем данные для входа с неверным паролем
         LoginRequest loginRequest = new LoginRequest("testuser2", "wrongpassword");
 
-        // Выполняем запрос на авторизацию
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     public void loginUser_withNonExistentUser_returnsError() throws Exception {
-        // Подготавливаем данные для входа с несуществующим пользователем
-        LoginRequest loginRequest = new LoginRequest("password123", "nonexistent");
+        LoginRequest loginRequest = new LoginRequest("nonexistent", "password123");
 
-        // Выполняем запрос на авторизацию
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     public void loginUser_withEmptyCredentials_returnsError() throws Exception {
-        // Подготавливаем данные для входа с пустыми учетными данными
         LoginRequest loginRequest = new LoginRequest("", "");
 
-        // Выполняем запрос на авторизацию
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isUnauthorized());
     }
 }

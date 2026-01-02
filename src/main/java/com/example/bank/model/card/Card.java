@@ -22,10 +22,9 @@ public abstract class Card {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore
     private long id;
 
-    @Column(length = 10, unique = true, nullable = false)
+    @Column(length = 16, unique = true, nullable = false)
     private String cardNumber;
 
     @ManyToOne

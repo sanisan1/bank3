@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 public class DebitCardResponse {
-
+    private Long id;
     private String cardNumber;
     private BigDecimal balance;
     private CardType cardType;

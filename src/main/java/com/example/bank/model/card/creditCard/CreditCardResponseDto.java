@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreditCardResponseDto {
-
+    private Long id;
     private String cardNumber;
     private BigDecimal balance;
     private BigDecimal creditLimit;

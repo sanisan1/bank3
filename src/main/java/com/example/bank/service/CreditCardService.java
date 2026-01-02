@@ -242,10 +242,10 @@ public class CreditCardService extends AbstractCardService {
 
     // Увеличение кредитного лимита (только для администратора)
     @PreAuthorize("hasRole('ADMIN')")
-    public CreditCard increaseCreditLimit(String cardNumber, BigDecimal newLimit) {
-        log.info("Increasing credit limit for card {} to {}", cardNumber, newLimit);
+    public CreditCard increaseCreditLimit(Long id, BigDecimal newLimit) {
+        log.info("Increasing credit limit for card {} to {}", id, newLimit);
         try {
-            CreditCard acc = (CreditCard) getCardByNumber(cardNumber);
+            CreditCard acc = (CreditCard) getCardById(id);
             if (newLimit == null || newLimit.compareTo(acc.getCreditLimit()) <= 0) {
                 log.error("Invalid new limit {} (current limit = {})", newLimit, acc.getCreditLimit());
                 throw new InvalidOperationException("New limit must be greater than current limit");
@@ -258,17 +258,17 @@ public class CreditCardService extends AbstractCardService {
 
             return acc;
         } catch (Exception e) {
-            log.error("Error increasing limit {}: {}", cardNumber, e.getMessage(), e);
+            log.error("Error increasing limit {}: {}", id, e.getMessage(), e);
             throw e;
         }
     }
 
     // Уменьшение кредитного лимита (только для администратора)
     @PreAuthorize("hasRole('ADMIN')")
-    public CreditCard decreaseCreditLimit(String cardNumber, BigDecimal newLimit) {
-        log.info("Decreasing credit limit for card {} to {}", cardNumber, newLimit);
+    public CreditCard decreaseCreditLimit(Long id, BigDecimal newLimit) {
+        log.info("Decreasing credit limit for card {} to {}", id, newLimit);
         try {
-            CreditCard acc = (CreditCard) getCardByNumber(cardNumber);
+            CreditCard acc = (CreditCard) getCardById(id);
             if (newLimit == null || newLimit.compareTo(BigDecimal.ZERO) <= 0) {
                 log.error("Attempt to set invalid limit: {}", newLimit);
                 throw new InvalidOperationException("New limit must be > 0");
@@ -282,26 +282,26 @@ public class CreditCardService extends AbstractCardService {
             acc.updateTotalDebt();
             return acc;
         } catch (Exception e) {
-            log.error("Error decreasing limit {}: {}", cardNumber, e.getMessage(), e);
+            log.error("Error decreasing limit {}: {}", id, e.getMessage(), e);
             throw e;
         }
     }
 
     // Установка процентной ставки (только для администратора)
     @PreAuthorize("hasRole('ADMIN')")
-    public CreditCard setInterestRate(String cardNumber, BigDecimal newRate) {
-        log.info("Setting new interest rate for card {}: {}", cardNumber, newRate);
+    public CreditCard setInterestRate(Long id, BigDecimal newRate) {
+        log.info("Setting new interest rate for card {}: {}", id, newRate);
         try {
             if (newRate == null || newRate.compareTo(BigDecimal.ZERO) < 0) {
                 log.error("Attempt to set negative interest rate: {}", newRate);
                 throw new InvalidOperationException("Interest rate cannot be negative");
             }
 
-            CreditCard acc = (CreditCard) getCardByNumber(cardNumber);
+            CreditCard acc = (CreditCard) getCardById(id);
             acc.setInterestRate(newRate);
             return acc;
         } catch (Exception e) {
-            log.error("Error setting interest rate for card {}: {}", cardNumber, e.getMessage(), e);
+            log.error("Error setting interest rate for card {}: {}", id, e.getMessage(), e);
             throw e;
         }
     }

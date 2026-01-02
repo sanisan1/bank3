@@ -1,5 +1,6 @@
 package com.example.bank.service;
 
+import com.example.bank.exception.ResourceNotFoundException;
 import com.example.bank.mapper.DebitCardMapper;
 import com.example.bank.model.card.debitCard.DebitCard;
 import com.example.bank.model.card.debitCard.DebitCardResponse;
@@ -9,6 +10,7 @@ import com.example.bank.repository.UserRepository;
 import com.example.bank.security.CardSecurity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -24,16 +26,20 @@ public class DebitCardService extends AbstractCardService {
         super(cardRepository, userRepository, cardSecurity);
     }
 
-    // Создание дебетвого аккаунта
-    public DebitCardResponse createCard() {
+    @PreAuthorize("hasRole('ADMIN')")
+    public DebitCardResponse createCard(Long userId) {
         log.info("Creating debit card");
         try {
-            User user = getCurrentUser();
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> {
+                        log.error("User not found with id={}", userId);
+                        return new ResourceNotFoundException("User", "id", userId);
+                    });
 
             DebitCard card = new DebitCard();
             card.setUser(user);
             card.setCardNumber(generateUniqueCardNumber());
-            card.setExpiryDate(LocalDate.now().plusYears(5)); // Устанавливаем дату окончания действия на 5 лет
+            card.setExpiryDate(LocalDate.now().plusYears(5));
 
             DebitCard saved = cardRepository.save(card);
 
@@ -48,4 +54,6 @@ public class DebitCardService extends AbstractCardService {
             throw e;
         }
     }
+
+
 }

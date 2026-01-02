@@ -3,6 +3,7 @@ package com.example.bank.exception;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -49,8 +50,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGenericException(Exception ex) {
+        // Обрабатываем специфически ошибки аутентификации
+        if (ex.getMessage() != null && ex.getMessage().contains("Invalid credentials")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error: " + ex.getMessage());
     }
+
 
     @ExceptionHandler(UserBlockedException.class)
     public ResponseEntity<String> handleUserBlockedException(UserBlockedException ex) {
@@ -59,6 +65,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CardBlockedException.class)
     public ResponseEntity<String> handleCardBlockedException(CardBlockedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<String> handleBadCredentials(BadCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
     }
 
 

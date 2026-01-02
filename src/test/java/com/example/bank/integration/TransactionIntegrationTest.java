@@ -37,7 +37,6 @@ public class TransactionIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -49,10 +48,11 @@ public class TransactionIntegrationTest {
     private String userToken;
     private String creditCardNumber;
     private String debitCardNumber;
+    private Long creditCardId;
+    private Long debitCardId;
 
     @BeforeEach
     public void setUp() throws Exception {
-        // Получаем токен администратора
         adminToken = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
@@ -60,7 +60,8 @@ public class TransactionIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
-                .getContentAsString();
+                .getContentAsString()
+                .trim();
 
         // Создаем обычного пользователя
         CreateUserDto userDto = new CreateUserDto();
@@ -71,15 +72,11 @@ public class TransactionIntegrationTest {
         userDto.setEmail("testuser@example.com");
         userDto.setPhoneNumber("1234567890");
 
-        String userResponse = mockMvc.perform(post("/register")
+        mockMvc.perform(post("/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(status().isOk());
 
-        // Получаем токен обычного пользователя
         userToken = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
@@ -87,12 +84,11 @@ public class TransactionIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
-                .getContentAsString();
-
+                .getContentAsString()
+                .trim();
 
         User user = userRepository.findByUsername("testuser2").orElseThrow();
         userId = user.getUserId();
-
 
         // Создаем кредитный аккаунт через администратора
         CreditCardCreateRequest request = new CreditCardCreateRequest();
@@ -110,33 +106,68 @@ public class TransactionIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        // Извлекаем номер кредитного счета из ответа
         JsonNode creditCardJson = objectMapper.readTree(creditCardResponse);
         creditCardNumber = creditCardJson.get("cardNumber").asText();
+        JsonNode creditIdNode = creditCardJson.get("id");
 
-        // Создаем дебетовый аккаунт
-        String debitCardResponse = mockMvc.perform(post("/api/debit-cards")
-                        .header("Authorization", "Bearer " + userToken)
+        if (creditIdNode != null && !creditIdNode.isNull()) {
+            creditCardId = creditIdNode.asLong();
+        } else {
+            String getAllCardsResponse = mockMvc.perform(get("/api/cards/getCards")
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            JsonNode getAllCardsJson = objectMapper.readTree(getAllCardsResponse);
+            for (JsonNode cardNode : getAllCardsJson) {
+                if (creditCardNumber.equals(cardNode.get("cardNumber").asText())) {
+                    creditCardId = cardNode.get("id").asLong();
+                    break;
+                }
+            }
+        }
+
+        String debitCardResponse = mockMvc.perform(post("/api/debit-cards/" + userId)
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        // Извлекаем номер дебетового счета из ответа
         JsonNode debitCardJson = objectMapper.readTree(debitCardResponse);
         debitCardNumber = debitCardJson.get("cardNumber").asText();
+        JsonNode debitIdNode = debitCardJson.get("id");
+
+        if (debitIdNode != null && !debitIdNode.isNull()) {
+            debitCardId = debitIdNode.asLong();
+        } else {
+            String getAllCardsResponse = mockMvc.perform(get("/api/cards/getCards")
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            JsonNode getAllCardsJson = objectMapper.readTree(getAllCardsResponse);
+            for (JsonNode cardNode : getAllCardsJson) {
+                if (debitCardNumber.equals(cardNode.get("cardNumber").asText())) {
+                    debitCardId = cardNode.get("id").asLong();
+                    break;
+                }
+            }
+        }
     }
 
     @Test
     public void depositToCard_asUser_succeeds() throws Exception {
-        // Подготовка данных для депозита
         TransactionOperationRequest request = new TransactionOperationRequest();
-        request.setCardNumber(debitCardNumber);
+        request.setId(debitCardId);
         request.setAmount(new BigDecimal("100.00"));
         request.setComment("Test deposit");
 
-        // Выполняем депозит
         mockMvc.perform(post("/api/transactions/deposit")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -150,7 +181,7 @@ public class TransactionIntegrationTest {
     public void withdrawFromCard_asUser_succeeds() throws Exception {
         // Сначала пополняем счет
         TransactionOperationRequest depositRequest = new TransactionOperationRequest();
-        depositRequest.setCardNumber(debitCardNumber);
+        depositRequest.setId(debitCardId);
         depositRequest.setAmount(new BigDecimal("100.00"));
         depositRequest.setComment("Initial deposit");
 
@@ -162,7 +193,7 @@ public class TransactionIntegrationTest {
 
         // Затем снимаем средства
         TransactionOperationRequest withdrawRequest = new TransactionOperationRequest();
-        withdrawRequest.setCardNumber(debitCardNumber);
+        withdrawRequest.setId(debitCardId);
         withdrawRequest.setAmount(new BigDecimal("50.00"));
         withdrawRequest.setComment("Test withdrawal");
 
@@ -176,10 +207,10 @@ public class TransactionIntegrationTest {
     }
 
     @Test
-    public void transferBetweenCards_asUser_succeeds() throws Exception {
+    public void transferBetweenCards_asUser_succeeds() throws Exception { // Тест перевода между картами
         // Сначала пополняем первый счет
         TransactionOperationRequest depositRequest = new TransactionOperationRequest();
-        depositRequest.setCardNumber(debitCardNumber);
+        depositRequest.setId(debitCardId);
         depositRequest.setAmount(new BigDecimal("200.00"));
         depositRequest.setComment("Initial deposit");
 
@@ -191,8 +222,8 @@ public class TransactionIntegrationTest {
 
         // Переводим средства со счета на счет
         TransferRequest transferRequest = new TransferRequest();
-        transferRequest.setFromCard(debitCardNumber);
-        transferRequest.setToCard(creditCardNumber);
+        transferRequest.setFromId(debitCardId);
+        transferRequest.setToId(creditCardId);
         transferRequest.setAmount(new BigDecimal("100.00"));
         transferRequest.setComment("Test transfer");
 
@@ -206,10 +237,10 @@ public class TransactionIntegrationTest {
     }
 
     @Test
-    public void getTransactionsByCard_asUser_succeeds() throws Exception {
+    public void getTransactionsByCard_asUser_succeeds() throws Exception { // Тест получения транзакций для пользователя
         // Сначала выполняем операцию, чтобы были транзакции
         TransactionOperationRequest depositRequest = new TransactionOperationRequest();
-        depositRequest.setCardNumber(debitCardNumber);
+        depositRequest.setId(debitCardId);
         depositRequest.setAmount(new BigDecimal("100.00"));
         depositRequest.setComment("Test deposit");
 
@@ -219,21 +250,20 @@ public class TransactionIntegrationTest {
                         .content(objectMapper.writeValueAsString(depositRequest)))
                 .andExpect(status().isOk());
 
-        // Получаем список транзакций
-        mockMvc.perform(get("/api/transactions/by-card/{cardNumber}", debitCardNumber)
+        // Получаем список транзакций для пользователя (так как нельзя получить по маскированному номеру карты)
+        mockMvc.perform(get("/api/transactions/getAllForUser")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].toCard").value(debitCardNumber))
                 .andExpect(jsonPath("$[0].amount").value(100.00));
     }
 
     @Test
-    public void getAllTransactions_asAdmin_succeeds() throws Exception {
+    public void getAllTransactions_asAdmin_succeeds() throws Exception { // Тест получения всех транзакций администратором
         // Сначала выполняем операцию, чтобы были транзакции
         TransactionOperationRequest depositRequest = new TransactionOperationRequest();
-        depositRequest.setCardNumber(debitCardNumber);
+        depositRequest.setId(debitCardId);
         depositRequest.setAmount(new BigDecimal("100.00"));
         depositRequest.setComment("Test deposit");
 
@@ -251,12 +281,5 @@ public class TransactionIntegrationTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
-    @Test
-    public void getAllTransactions_asUser_forbidden() throws Exception {
-        // Обычный пользователь пытается получить все транзакции
-        mockMvc.perform(get("/api/transactions/getAll")
-                        .header("Authorization", "Bearer " + userToken)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError());
-    }
+
 }

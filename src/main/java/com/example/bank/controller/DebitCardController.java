@@ -15,18 +15,19 @@ public class DebitCardController {
         this.debitCardService = debitCardService;
     }
 
-    // ✅ Создание аккаунта
-    @PostMapping
-    public ResponseEntity<DebitCardResponse> createCard() {
-        DebitCardResponse created = debitCardService.createCard();
+
+
+    @PostMapping("/{id}")
+    public ResponseEntity<DebitCardResponse> createCard(@PathVariable Long id) {
+        DebitCardResponse created = debitCardService.createCard(id);
         return ResponseEntity.status(201).body(created);
     }
 
 
-    // ✅ Удаление аккаунта
-    @DeleteMapping("/{cardNumber}")
-    public ResponseEntity<Void> deleteCard(@PathVariable String cardNumber) {
-        debitCardService.deleteCard(cardNumber);
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCard(@PathVariable Long id) {
+        debitCardService.deleteCard(id);
         return ResponseEntity.noContent().build();
     }
 }

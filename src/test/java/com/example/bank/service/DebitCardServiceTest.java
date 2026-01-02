@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -61,9 +60,9 @@ class DebitCardServiceTest {
 
     @Test
     void createCard_shouldCreateDebitCard() {
-        // Arrange
+        Long userId = 1L;
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
         user.setBlocked(false);
 
         DebitCard card = new DebitCard();
@@ -71,60 +70,48 @@ class DebitCardServiceTest {
         card.setCardNumber("1234567890");
         card.setUser(user);
 
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("testUser");
-        when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getPrincipal()).thenReturn(user);
-        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(cardRepository.save(any(DebitCard.class))).thenReturn(card);
 
-        // Act
-        DebitCardResponse response = debitCardService.createCard();
+        DebitCardResponse response = debitCardService.createCard(userId);
 
-        // Assert
+        // Проверка, что карта создается с маскированным номером
         assertNotNull(response);
-        assertEquals("1234567890", response.getCardNumber());
+        assertEquals("**** **** **** 7890", response.getCardNumber());
         verify(cardRepository, times(1)).save(any(DebitCard.class));
     }
 
 
 
     @Test
-    void createCard_shouldThrowExceptionWhenUserNotAuthenticated() {
-
-        when(securityContext.getAuthentication()).thenReturn(null);
-
-
-        assertThrows(AccessDeniedException.class, () -> debitCardService.createCard());
-        verify(cardRepository, never()).save(any(DebitCard.class));
-    }
-
-
-    @Test
     void testDeposit() {
+        // Проверка, что депозит увеличивает баланс
         debitCardService.processDeposit(card, new BigDecimal(100));
         assertEquals(new BigDecimal(1100), card.getBalance());
-
     }
 
     @Test
     void testWithdraw() {
+        // Проверка, что снятие уменьшает баланс
         debitCardService.processWithdraw(card, new BigDecimal(100));
         assertEquals(new BigDecimal(900), card.getBalance());
     }
 
     @Test
     void testWithdraw_shouldThrowExceptionWhenAmountIsNegative() {
+        // Проверка, что при отрицательной сумме выбрасывается исключение
         assertThrows(IllegalArgumentException.class, () -> debitCardService.processWithdraw(card, new BigDecimal(-100)));
     }
 
     @Test
     void testWithdraw_shouldThrowExceptionWhenAmountIsGreaterThanBalance() {
+        // Проверка, что при превышении баланса выбрасывается исключение
         assertThrows(InvalidOperationException.class, () -> debitCardService.processWithdraw(card, new BigDecimal(1100)));
     }
 
     @Test
     void testWithdraw_shouldThrowExceptionWhenCardIsBlocked() {
+        // Проверка, что при заблокированной карте выбрасывается исключение
         card.setStatus(CardStatus.BLOCKED);
         assertThrows(CardBlockedException.class, () -> debitCardService.processWithdraw(card, new BigDecimal(100)));
     }

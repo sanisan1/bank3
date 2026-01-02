@@ -57,64 +57,60 @@ public class TransactionService {
     }
 
 
-    private Card getCardByNumber(String cardNumber) {
-        return cardRepository.findByCardNumber(cardNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Card not found", "CardNumber", cardNumber));
-    }
 
     // Операция пополнения счета
     @Transactional
-    @PreAuthorize("@cardSecurity.isOwner(#cardNumber)")
-    public CardDto deposit(String cardNumber, BigDecimal amount, String comment) {
-        log.info("Deposit to card {}: amount {}", cardNumber, amount);
+    @PreAuthorize("@cardSecurity.isOwner(#id)")
+    public CardDto deposit(Long id, BigDecimal amount, String comment) {
+        log.info("Deposit to card {}: amount {}", id, amount);
         try {
-            Card acc = getCardByNumber(cardNumber);
-            AbstractCardService service = serviceMap.get(acc.getClass());
+            Card card = cardService.getCardById(id);
+            AbstractCardService service = serviceMap.get(card.getClass());
             if (service == null) {
-                log.error("Unsupported card type for deposit: {}", acc.getClass());
+                log.error("Unsupported card type for deposit: {}", card.getClass());
                 throw new InvalidOperationException("Unsupported card type");
             }
 
-            Card updatedCard = service.processDeposit(acc, amount);
+            Card updatedCard = service.processDeposit(card, amount);
 
             Transaction transaction = new Transaction();
-            transaction.setToCard(cardNumber);
+            transaction.setToCard(card.getCardNumber());
             transaction.setAmount(amount);
             transaction.setType(OperationType.deposit);
             transaction.setComment(comment);
-            transaction.setUser(acc.getUser());
+            transaction.setUser(card.getUser());
             transactionRepository.save(transaction);
             eventProducer.sendTransactionEvent(NotificationMapper.toEventDTO(transaction));
 
 
             return CardMapper.toDto(updatedCard);
         } catch (Exception e) {
-            log.error("Deposit error for card {}: {}", cardNumber, e.getMessage(), e);
+            log.error("Deposit error for card {}: {}", id, e.getMessage(), e);
             throw e;
         }
     }
 
     // Операция снятия со счета
     @Transactional
-    @PreAuthorize("@cardSecurity.isOwner(#cardNumber)")
-    public CardDto withdraw(String cardNumber, BigDecimal amount, String comment) {
-        log.info("Withdraw from card {}: amount {}", cardNumber, amount);
+    @PreAuthorize("@cardSecurity.isOwner(#id)")
+    public CardDto withdraw(Long id, BigDecimal amount, String comment) {
+        log.info("Withdraw from card {}: amount {}", id, amount);
         try {
-            Card acc = getCardByNumber(cardNumber);
-            AbstractCardService service = serviceMap.get(acc.getClass());
+            Card card = cardService.getCardById(id);
+            AbstractCardService service = serviceMap.get(card.getClass());
             if (service == null) {
-                log.error("Unsupported card type for withdrawal: {}", acc.getClass());
+                log.error("Unsupported card type for withdrawal: {}", card.getClass());
                 throw new InvalidOperationException("Unsupported card type");
             }
 
-            Card updatedCard = service.processWithdraw(acc, amount);
+            Card updatedCard = service.processWithdraw(card, amount);
 
             Transaction transaction = new Transaction();
-            transaction.setFromCard(acc.getCardNumber());
+            transaction.setFromCard(card.getCardNumber());
             transaction.setAmount(amount);
             transaction.setType(OperationType.withdraw);
             transaction.setComment(comment);
-            transaction.setUser(acc.getUser());
+            transaction.setUser(card.getUser());
             transactionRepository.save(transaction);
 
 
@@ -123,50 +119,50 @@ public class TransactionService {
 
             return CardMapper.toDto(updatedCard);
         } catch (Exception e) {
-            log.error("Withdraw error for card {}: {}", cardNumber, e.getMessage(), e);
+            log.error("Withdraw error for card {}: {}", id, e.getMessage(), e);
             throw e;
         }
     }
 
     // Операция перевода средств
     @Transactional
-    @PreAuthorize("@cardSecurity.isOwner(#fromNumber)")
-    public CardDto transfer(String fromNumber, String toNumber, BigDecimal amount, String comment) {
-        if (fromNumber.equals(toNumber)) {
+    @PreAuthorize("@cardSecurity.isOwner(#fromId) and @cardSecurity.isOwner(#toId)")
+    public CardDto transfer(Long fromId, Long toId, BigDecimal amount, String comment) {
+        if (fromId.equals(toId)) {
             throw new IllegalArgumentException("Невозможно перевести средства на тот же счёт");
         }
 
-        log.info("Transfer: {} → {}, amount {}", fromNumber, toNumber, amount);
+        log.info("Transfer: {} → {}, amount {}", fromId, toId, amount);
         try {
-            Card fromAcc = getCardByNumber(fromNumber);
-            Card toAcc = getCardByNumber(toNumber);
+            Card fromCard = cardService.getCardById(fromId);
+            Card toCard = cardService.getCardById(toId);
 
-            AbstractCardService fromService = serviceMap.get(fromAcc.getClass());
-            AbstractCardService toService = serviceMap.get(toAcc.getClass());
+            AbstractCardService fromService = serviceMap.get(fromCard.getClass());
+            AbstractCardService toService = serviceMap.get(toCard.getClass());
             if (fromService == null || toService == null) {
-                log.error("Unsupported card type for transfer: {} or {}", fromAcc.getClass(), toAcc.getClass());
+                log.error("Unsupported card type for transfer: {} or {}", fromCard.getClass(), toCard.getClass());
                 throw new InvalidOperationException("Unsupported card type");
             }
 
-            fromAcc = fromService.processWithdraw(fromAcc, amount);
-            toService.processDeposit(toAcc, amount);
+            fromCard = fromService.processWithdraw(fromCard, amount);
+            toService.processDeposit(toCard, amount);
 
             Transaction transaction = new Transaction();
-            transaction.setFromCard(fromNumber);
-            transaction.setToCard(toNumber);
+            transaction.setFromCard(fromCard.getCardNumber());
+            transaction.setToCard(toCard.getCardNumber());
             transaction.setAmount(amount);
             transaction.setType(OperationType.transfer);
             transaction.setComment(comment);
-            transaction.setUser(fromAcc.getUser());
+            transaction.setUser(fromCard.getUser());
             transactionRepository.save(transaction);
 
             eventProducer.sendTransactionEvent(NotificationMapper.toEventDTO(transaction));
 
 
-            return CardMapper.toDto(fromAcc);
+            return CardMapper.toDto(fromCard);
 
         } catch (Exception e) {
-            log.error("Transfer error from {} to {}: {}", fromNumber, toNumber, e.getMessage(), e);
+            log.error("Transfer error from {} to {}: {}", fromId, toId, e.getMessage(), e);
             throw e;
         }
     }
@@ -187,6 +183,7 @@ public class TransactionService {
                 .collect(Collectors.toList());
     }
 
+
     // Получить транзакции по счету
     @PreAuthorize("@cardSecurity.isOwner(#cardNumber)")
     public List<TransactionResponse> getTransactionsByCard(String cardNumber) {
@@ -196,7 +193,7 @@ public class TransactionService {
                 .collect(Collectors.toList());
     }
 
-    // Получить транзакции по пользователю
+    @PreAuthorize("hasRole('ADMIN')")
     public List<TransactionResponse> getTransactionsByUser(Long userId) {
         List<Card> userCards = cardRepository.findByUserUserId(userId);
         List<String> cardNumbers = userCards.stream()

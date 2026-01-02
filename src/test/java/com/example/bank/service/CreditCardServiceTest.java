@@ -49,36 +49,25 @@ class CreditCardServiceTest {
     }
 
 
-    /**
-     * Проверяет, что при снятии суммы в пределах кредитного лимита:
-     * - баланс уменьшается на сумму;
-     * - тело долга увеличивается на ту же сумму.
-     */
     @Test
     void testProcessWithdrawWithinLimit() {
+        // Проверка снятия в пределах лимита: баланс уменьшается, долг увеличивается
         creditCardService.processWithdraw(card, BigDecimal.valueOf(200));
 
         assertEquals(BigDecimal.valueOf(800), card.getBalance());
         assertEquals(BigDecimal.valueOf(200), card.getDebt());
     }
 
-    /**
-     * Проверяет, что при попытке снять больше, чем доступно по лимиту,
-     * выбрасывается исключение InvalidOperationException.
-     */
     @Test
     void testProcessWithdrawExceedsLimitThrows() {
+        // Проверка, что при превышении лимита выбрасывается исключение
         assertThrows(InvalidOperationException.class, () ->
                 creditCardService.processWithdraw(card, BigDecimal.valueOf(2000)));
     }
 
-    /**
-     * Проверяет, что при внесении денег на счёт без процентов:
-     * - долг уменьшается на сумму пополнения;
-     * - баланс увеличивается.
-     */
     @Test
     void testProcessDepositReducesDebt() {
+        // Проверка, что депозит уменьшает долг и увеличивает баланс
         card.setDebt(BigDecimal.valueOf(300));
         card.setBalance(BigDecimal.valueOf(700));
 
@@ -88,12 +77,9 @@ class CreditCardServiceTest {
         assertEquals(BigDecimal.valueOf(200), card.getDebt());
     }
 
-    /**
-     * Проверяет начисление процентов на тело долга.
-     * Процент начисляется только на Debt, не на проценты.
-     */
     @Test
     void testAccrueMonthlyInterestAddsInterest() {
+        // Проверка начисления процентов на тело долга
         card.setDebt(BigDecimal.valueOf(1000));
 
         Page<CreditCard> page = new PageImpl<>(List.of(card));
@@ -106,14 +92,9 @@ class CreditCardServiceTest {
         verify(creditCardRepository, atLeastOnce()).save(card);
     }
 
-    /**
-     * Проверяет, что при внесении суммы, большей чем проценты:
-     * - проценты гасятся полностью;
-     * - остаток идёт в погашение тела;
-     * - баланс растёт на ту же величину, что уменьшился долг.
-     */
     @Test
     void testDepositPaysOffInterestAndPartOfDebt() {
+        // Проверка погашения процентов и части тела долга при депозите
         card.setTotalDebt(BigDecimal.valueOf(550));   // 500 тело + 50 проценты
         card.setDebt(BigDecimal.valueOf(500));
         card.setAccruedInterest(BigDecimal.valueOf(50));
@@ -127,14 +108,9 @@ class CreditCardServiceTest {
         assertEquals(BigDecimal.valueOf(490), card.getTotalDebt()); // общий долг пересчитан
     }
 
-    /**
-     * Проверяет, что при внесении суммы, меньшей чем проценты:
-     * - тело долга не уменьшается;
-     * - проценты уменьшаются на внесённую сумму;
-     * - баланс не изменяется.
-     */
     @Test
     void testDepositPaysOffPartOfInterestOnly() {
+        // Проверка погашения только части процентов при депозите
         card.setTotalDebt(BigDecimal.valueOf(550));   // 500 тело + 50 проценты
         card.setDebt(BigDecimal.valueOf(500));
         card.setAccruedInterest(BigDecimal.valueOf(50));
@@ -148,12 +124,9 @@ class CreditCardServiceTest {
         assertEquals(BigDecimal.valueOf(510), card.getTotalDebt());
     }
 
-    /**
-     * Проверяет, что при снятии 300 со счёта с балансом 1200
-     * тело долга корректно обновляется.
-     */
     @Test
     void testWithdrawCreatesDebtCorrectly() {
+        // Проверка корректного обновления тела долга при снятии
         card.setBalance(BigDecimal.valueOf(1200));
 
         creditCardService.processWithdraw(card, BigDecimal.valueOf(300));
@@ -164,12 +137,9 @@ class CreditCardServiceTest {
         assertEquals(BigDecimal.valueOf(100), card.getTotalDebt());
     }
 
-    /**
-     * Проверяет, что у нового аккаунта без долга и процентов
-     * при запуске расчёта всё остаётся по нулям.
-     */
     @Test
     void testAccrueInterestOnEmptyCardDoesNothing() {
+        // Проверка, что у нового аккаунта без долга начисление процентов ничего не меняет
         card.setBalance(BigDecimal.valueOf(1200));
 
         Page<CreditCard> page = new PageImpl<>(List.of(card));

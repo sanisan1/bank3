@@ -82,18 +82,20 @@ public abstract class AbstractCardService {
         }//////////////////////
     }
 
-    // Генерирует уникальный 10-значный номер счета
+
+// Генерирует уникальный 16-значный номер карты
     public String generateUniqueCardNumber() {
         log.info("Generating unique card number");
         String number;
-        long min = 1_000_000_000L;   // 10-значное число, первая цифра 1
-        long max = 9_999_999_999L;   // максимум, первая цифра 9
+
+        long min = 1_000_000_000_000_000L;  // 16 цифр, первая минимум 1
+        long max = 9_999_999_999_999_999L;  // 16 цифр, первая максимум 9
 
         try {
             do {
                 long randomNum = Math.abs(secureRandom.nextLong());
                 long valueInRange = min + (randomNum % (max - min + 1)); // [min, max]
-                number = Long.toString(valueInRange);                    // без форматирования
+                number = Long.toString(valueInRange);
             } while (cardRepository.existsByCardNumber(number));
 
             return number;
@@ -102,6 +104,7 @@ public abstract class AbstractCardService {
             throw e;
         }
     }
+
 
 
     // Находит счет по его номеру
@@ -160,7 +163,7 @@ public abstract class AbstractCardService {
         }
     }
 
-    // Удаляет счет по ID
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteById(Long id) {
         log.info("Deleting card by ID: {}", id);
         try {
@@ -189,10 +192,10 @@ public abstract class AbstractCardService {
     // Разблокирует счет (только для администратора)
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public Card unblockCard(String cardNumber) {
-        log.info("Admin unblocking card: {}", cardNumber);
+    public Card unblockCard(Long id) {
+        log.info("Admin unblocking card: {}", id);
         try {
-            Card card = getCardByNumber(cardNumber);
+            Card card = getCardById(id);
             card.setStatus(CardStatus.ACTIVE);
             return cardRepository.save(card);
         } catch (Exception e) {
@@ -202,7 +205,7 @@ public abstract class AbstractCardService {
     }
 
     // Получает счет по ID
-    protected Card getCardById(Long cardId) {
+    public Card getCardById(Long cardId) {
         try {
             return cardRepository.findById(cardId)
                     .orElseThrow(() -> {
@@ -256,24 +259,21 @@ public abstract class AbstractCardService {
     }
 
     // Удаляет счет пользователем только если баланс равен нулю
-    public void deleteCard(String cardNumber) {
-        log.info("User deleting card: {}", cardNumber);
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deleteCard(Long id) {
+        log.info("User deleting card: {}", id);
         try {
-            User user = getCurrentUser();
-            Card card = getCardByNumber(cardNumber);
+
+            Card card = getCardById(id);
             checkCardBlock(card);
 
-            if (!card.getUser().getUserId().equals(user.getUserId())) {
-                log.error("Attempt to delete card by non-owner, userId={}, owner={}", user.getUserId(), card.getUser().getUserId());
-                throw new AccessDeniedException("Пользователь не является владельцем счета");
-            }
 
             if (card.getBalance().compareTo(BigDecimal.ZERO) != 0) {
                 log.error("Attempt to delete card with non-zero balance: {}, balance={}", card.getCardNumber(), card.getBalance());
                 throw new InvalidOperationException("Невозможно удалить счет с ненулевым балансом");
             }
 
-            cardRepository.deleteByCardNumber(cardNumber);
+            cardRepository.deleteById(id);
         } catch (Exception e) {
             log.error("Error deleting card by user: {}", e.getMessage(), e);
             throw e;
