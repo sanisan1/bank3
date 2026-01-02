@@ -1,10 +1,9 @@
 package com.example.bank.controller;
 
-import com.example.bank.exception.ResourceNotFoundException;
-import com.example.bank.model.Notification;
+
 import com.example.bank.model.NotificationResponse;
-import com.example.bank.repository.NotificationRepository;
 import com.example.bank.service.NotificationService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,11 +20,13 @@ public class NotificationController {
 
     // Получить только непрочитанные уведомления пользователя
     @GetMapping("/unread")
+    @Operation(summary = "Получить непрочитанные уведомления", description = "Получение списка непрочитанных уведомлений пользователя")
     public List<NotificationResponse> getUnreadNotifications() {
         return notificationService.getUnreadNotification();
     }
-    //Получить все увдомления
+    //Получить все уведомления
     @GetMapping("/all")
+    @Operation(summary = "Получить все уведомления", description = "Получение списка всех уведомлений пользователя")
     public List<NotificationResponse> getAllNotifications() {
         return notificationService.getAlldNotification();
     }

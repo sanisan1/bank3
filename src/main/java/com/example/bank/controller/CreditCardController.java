@@ -7,9 +7,9 @@ import com.example.bank.service.CreditCardService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -26,6 +26,7 @@ public class CreditCardController {
 
 
     @PostMapping("/createforadmin")
+    @Operation(summary = "Создать кредитную карту администратором", description = "Создание кредитной карты администратором для пользователя")
     public ResponseEntity<CreditCardResponseDto> createCard(
             @Valid @RequestBody CreditCardCreateRequest request
     ) {
@@ -39,8 +40,9 @@ public class CreditCardController {
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
-    // содание для юзера
+    // создание для пользователя
     @PostMapping("/create")
+    @Operation(summary = "Создать кредитную карту для себя", description = "Создание кредитной карты пользователем для себя")
     public ResponseEntity<CreditCardResponseDto> createCardForSelf() {
         CreditCardResponseDto dto = creditCardService.createCardforUser();
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
@@ -51,6 +53,7 @@ public class CreditCardController {
 
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Удалить кредитную карту", description = "Удаление кредитной карты по ID")
     public ResponseEntity<Void> deleteCard(@PathVariable Long id) {
         creditCardService.deleteById(id);
         return ResponseEntity.noContent().build();
@@ -62,6 +65,7 @@ public class CreditCardController {
 
 
     @PutMapping("/{id}/increase-limit")
+    @Operation(summary = "Увеличить кредитный лимит", description = "Увеличение кредитного лимита карты")
     public ResponseEntity<CreditCard> increaseCreditLimit(
             @PathVariable Long id,
             @RequestParam @NotNull @DecimalMin("0.01") BigDecimal newLimit
@@ -72,6 +76,7 @@ public class CreditCardController {
 
 
     @PutMapping("/{id}/decrease-limit")
+    @Operation(summary = "Уменьшить кредитный лимит", description = "Уменьшение кредитного лимита карты")
     public ResponseEntity<CreditCard> decreaseCreditLimit(
             @PathVariable Long id,
             @RequestParam @NotNull @DecimalMin("0.01") BigDecimal newLimit
@@ -82,6 +87,7 @@ public class CreditCardController {
 
 
     @PutMapping("/{id}/set-interest")
+    @Operation(summary = "Установить процентную ставку", description = "Установка процентной ставки для кредитной карты")
     public ResponseEntity<CreditCard> setInterestRate(
             @PathVariable Long id,
             @RequestParam @NotNull @DecimalMin("0.0") BigDecimal newRate
@@ -92,6 +98,7 @@ public class CreditCardController {
 
 
     @PostMapping("/accrue-interest")
+    @Operation(summary = "Начислить проценты", description = "Ручной запуск начисления процентов по кредитным картам")
     public ResponseEntity<String> runAccrueInterest() {
         creditCardService.accrueMonthlyInterest(); // вызываем метод
         return ResponseEntity.ok("Начисление процентов выполнено");
